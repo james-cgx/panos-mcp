@@ -1,9 +1,9 @@
 # PanOS MCP Server
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
-[![GitHub stars](https://img.shields.io/github/stars/apius-tech/Palo-MCP)](https://github.com/apius-tech/Palo-MCP/stargazers)
-[![Tests](https://img.shields.io/badge/tests-85%20passing-brightgreen)](https://github.com/apius-tech/Palo-MCP/actions)
-[![GitHub release](https://img.shields.io/github/v/release/apius-tech/Palo-MCP)](https://github.com/apius-tech/Palo-MCP/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/james-cgx/panos-mcp)](https://github.com/james-cgx/panos-mcp/stargazers)
+[![Tests](https://img.shields.io/badge/tests-133%20passing-brightgreen)](https://github.com/james-cgx/panos-mcp/actions)
+[![GitHub release](https://img.shields.io/github/v/release/james-cgx/panos-mcp)](https://github.com/james-cgx/panos-mcp/releases/latest)
 
 **Control your Palo Alto Networks firewall with AI.** PanOS MCP is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that connects AI assistants — Claude, Cursor, and others — directly to PAN-OS firewalls and Panorama via the PAN-OS XML API. Ask questions, inspect policies, and make configuration changes in plain English instead of navigating the GUI or writing API scripts.
 
@@ -48,7 +48,7 @@ Talk to your firewall in plain English. Some examples:
 
 ### Claude Desktop — Desktop Extension (single firewall)
 
-1. Download the latest `panos-mcp.mcpb` from [Releases](https://github.com/apius-tech/Palo-MCP/releases)
+1. Download the latest `panos-mcp.mcpb` from [Releases](https://github.com/james-cgx/panos-mcp/releases)
 2. Double-click the file — Claude Desktop opens an install dialog
 3. Enter one complete credential pair: either your **1Password Environment ID** and **1Password Service Account Token**, or your **Firewall Host** and **API Key**
 
@@ -70,7 +70,7 @@ Then add the Environment ID and service account token to your `claude_desktop_co
   "mcpServers": {
     "panos": {
       "command": "npx",
-      "args": ["-y", "github:apius-tech/Palo-MCP"],
+      "args": ["-y", "github:james-cgx/panos-mcp"],
       "env": {
         "OP_ENVIRONMENT_ID": "your-1password-environment-id",
         "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
@@ -87,7 +87,7 @@ If you are not using 1Password, you can still set `PANOS_HOST` and `PANOS_API_KE
 ### Claude Code (CLI)
 
 ```bash
-claude mcp add panos -- npx -y github:apius-tech/Palo-MCP \
+claude mcp add panos -- npx -y github:james-cgx/panos-mcp \
   --env OP_ENVIRONMENT_ID=your-1password-environment-id \
   --env OP_SERVICE_ACCOUNT_TOKEN=your-1password-service-account-token
 ```
@@ -101,7 +101,7 @@ Open Cursor Settings (Ctrl+Shift+J) → MCP → Add new MCP server, or add to `~
   "mcpServers": {
     "panos": {
       "command": "npx",
-      "args": ["-y", "github:apius-tech/Palo-MCP"],
+      "args": ["-y", "github:james-cgx/panos-mcp"],
       "env": {
         "OP_ENVIRONMENT_ID": "your-1password-environment-id",
         "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
@@ -175,7 +175,7 @@ When multiple entries are configured, every tool accepts a `firewall: <name>` pa
 |----------|-------|-------------|
 | System | 4 | Firewall info, HA status, sessions, resources |
 | Network | 10 | Interfaces, zones, routing, ARP, VLANs, DHCP, DNS proxy, static routes (get, add, delete) |
-| Security | 14 | Security rules CRUD, profiles, profile groups, PBF rules CRUD, DoS, QoS rules CRUD |
+| Security | 18 | Security rules CRUD, profiles, profile groups, PBF rules CRUD, DoS, QoS rules CRUD |
 | Objects | 16 | Address/service objects and groups (get, add, delete), application filters, tags (get, add, delete) |
 | NAT | 5 | NAT rules (get, add, move, delete, enable/disable) |
 | User-ID | 3 | User-IP mappings, groups, config |
@@ -242,8 +242,8 @@ Self-signed firewall certificates are accepted through the proxy tunnel (the ser
 ## Development
 
 ```bash
-git clone https://github.com/apius-tech/Palo-MCP.git
-cd Palo-MCP
+git clone https://github.com/james-cgx/panos-mcp.git
+cd panos-mcp
 npm install
 # Configure OP_ENVIRONMENT_ID/OP_SERVICE_ACCOUNT_TOKEN, or PANOS_HOST/PANOS_API_KEY
 ```
@@ -278,7 +278,7 @@ Uses `set_config` to create the address object in the candidate configuration, t
 - **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
 - **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your credentials — API keys and, when 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` — kept locally in your OS keychain or environment variables under your control.
 - **Third-party sharing** — None. No data is shared with the authors, Anthropic, or any third party beyond the direct connection to your own firewall.
-- **Contact** — For privacy questions or data requests, [open a GitHub issue](https://github.com/apius-tech/Palo-MCP/issues). Maintained by Apius Technologies SA.
+- **Contact** — This extension collects and retains no personal data, so there are no data-subject requests to fulfill. For general privacy questions, [open a GitHub issue](https://github.com/james-cgx/panos-mcp/issues) — an informational query only; please don't include any personal data. Security vulnerabilities go through the separate private channel in [SECURITY.md](SECURITY.md). Maintained by James Cadena.
 
 ## Disclaimer
 
@@ -292,7 +292,7 @@ This software is provided "as is", without warranty of any kind. This tool conne
 
 ## Security
 
-To report a security vulnerability, please [open a GitHub issue](https://github.com/apius-tech/Palo-MCP/issues/new?labels=security&title=Security+vulnerability) with the `security` label. We will investigate and respond promptly.
+Please report security vulnerabilities privately — **do not** open a public issue. Use [GitHub Private Vulnerability Reporting](https://github.com/james-cgx/panos-mcp/security/advisories/new). See [SECURITY.md](SECURITY.md) for details.
 
 ## License
 
