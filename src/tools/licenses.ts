@@ -9,7 +9,7 @@ export function registerLicensesTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Licenses", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -24,7 +24,7 @@ export function registerLicensesTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get License Usage", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

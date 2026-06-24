@@ -9,7 +9,7 @@ export function registerVpnTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get IPSec Tunnels", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -24,7 +24,7 @@ export function registerVpnTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get GlobalProtect Users", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -39,7 +39,7 @@ export function registerVpnTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get GlobalProtect Config", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

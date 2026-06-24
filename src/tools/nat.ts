@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerNatTools(server: McpServer) {
@@ -14,7 +14,7 @@ export function registerNatTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get NAT Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -42,23 +42,23 @@ export function registerNatTools(server: McpServer) {
       disabled: z.boolean().optional().describe("Create rule in disabled state"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, service, snat_type, snat_address, snat_interface, dnat_address, dnat_port, description, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/nat/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
       element += `<destination>${members(destination)}</destination>`;
-      element += `<service>${service}</service>`;
+      element += `<service>${xmlEscape(service)}</service>`;
       if (snat_type) {
         element += `<source-translation>`;
         if (snat_type === "dynamic-ip-and-port") {
           element += `<dynamic-ip-and-port>`;
           if (snat_interface) {
-            element += `<interface-address><interface>${snat_interface}</interface></interface-address>`;
+            element += `<interface-address><interface>${xmlEscape(snat_interface)}</interface></interface-address>`;
           } else if (snat_address) {
             element += `<translated-address>${members([snat_address])}</translated-address>`;
           }
@@ -69,17 +69,17 @@ export function registerNatTools(server: McpServer) {
           element += `</dynamic-ip>`;
         } else if (snat_type === "static-ip") {
           element += `<static-ip>`;
-          if (snat_address) element += `<translated-address>${snat_address}</translated-address>`;
+          if (snat_address) element += `<translated-address>${xmlEscape(snat_address)}</translated-address>`;
           element += `</static-ip>`;
         }
         element += `</source-translation>`;
       }
       if (dnat_address) {
-        element += `<destination-translation><translated-address>${dnat_address}</translated-address>`;
-        if (dnat_port) element += `<translated-port>${dnat_port}</translated-port>`;
+        element += `<destination-translation><translated-address>${xmlEscape(dnat_address)}</translated-address>`;
+        if (dnat_port) element += `<translated-port>${xmlEscape(dnat_port)}</translated-port>`;
         element += `</destination-translation>`;
       }
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -96,7 +96,7 @@ export function registerNatTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Move NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -116,7 +116,7 @@ export function registerNatTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -134,7 +134,7 @@ export function registerNatTools(server: McpServer) {
       disabled: z.boolean().describe("true to disable the rule, false to enable it"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set NAT Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

@@ -206,7 +206,7 @@ export async function saveFirewallEntry(entry: FirewallEntry): Promise<void> {
   await initKeychain();
   entry = { ...entry, host: sanitizeHost(entry.host), verify_ssl: entry.verify_ssl ?? false };
   const configPath = getConfigPath();
-  mkdirSync(dirname(configPath), { recursive: true });
+  mkdirSync(dirname(configPath), { recursive: true, mode: 0o700 });
 
   let config: { firewalls: Array<{ name: string; host: string; api_key?: string }> };
   try {
@@ -229,7 +229,7 @@ export async function saveFirewallEntry(entry: FirewallEntry): Promise<void> {
     else config.firewalls.push({ name: entry.name, host: entry.host, api_key: entry.api_key });
   }
 
-  writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+  writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n", { mode: 0o600 });
 
   // Update in-memory state directly (avoids re-reading file and keychain)
   const memIdx = entries.findIndex((e) => e.name === entry.name);

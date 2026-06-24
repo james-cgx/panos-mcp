@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { executeOpCommand, getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { deviceGroup, firewallName } from "../schemas/panos.js";
+import { deviceGroup, firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerPanoramaTools(server: McpServer) {
@@ -15,7 +15,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Managed Devices", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -30,7 +30,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Device Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -46,7 +46,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Templates", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -61,7 +61,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Template Stacks", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -77,7 +77,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Shared Address Objects", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -92,7 +92,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Shared Address Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -107,7 +107,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Shared Service Objects", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -122,7 +122,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Shared Service Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -139,7 +139,7 @@ export function registerPanoramaTools(server: McpServer) {
       device_group: deviceGroup,
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Pre Rules", readOnlyHint: true, destructiveHint: false },
     async ({ device_group, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -158,7 +158,7 @@ export function registerPanoramaTools(server: McpServer) {
       device_group: deviceGroup,
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Post Rules", readOnlyHint: true, destructiveHint: false },
     async ({ device_group, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -178,7 +178,7 @@ export function registerPanoramaTools(server: McpServer) {
       rulebase: z.enum(["pre", "post"]).describe("Rulebase type: 'pre' or 'post'"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Device Group NAT Rules", readOnlyHint: true, destructiveHint: false },
     async ({ device_group, rulebase, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -197,7 +197,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Log Collectors", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -212,7 +212,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Collector Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -228,7 +228,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Push Status", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -244,7 +244,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Commit Status", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -260,7 +260,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Managed Device Software", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -276,7 +276,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get HA Status", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -292,7 +292,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Device Group Hierarchy", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -308,7 +308,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Shared Security Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -323,7 +323,7 @@ export function registerPanoramaTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Panorama Get Shared Profile Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -355,12 +355,12 @@ export function registerPanoramaTools(server: McpServer) {
       tag: z.array(z.string().min(1)).optional().describe("Tags to apply to the rule"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Add Pre Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, name, from_zones, to_zones, source, destination, application, service, action, log_end, log_start, profile_group, description, disabled, tag, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='${device_group}']/pre-rulebase/security/rules`;
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -370,8 +370,8 @@ export function registerPanoramaTools(server: McpServer) {
       element += `<action>${action}</action>`;
       if (log_end !== undefined) element += `<log-end>${log_end ? "yes" : "no"}</log-end>`;
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
-      if (profile_group) element += `<profile-setting><group><member>${profile_group}</member></group></profile-setting>`;
-      if (description) element += `<description>${description}</description>`;
+      if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
@@ -390,7 +390,7 @@ export function registerPanoramaTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Move Pre Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -411,7 +411,7 @@ export function registerPanoramaTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Pre-rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Delete Pre Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -444,12 +444,12 @@ export function registerPanoramaTools(server: McpServer) {
       tag: z.array(z.string().min(1)).optional().describe("Tags to apply to the rule"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Add Post Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, name, from_zones, to_zones, source, destination, application, service, action, log_end, log_start, profile_group, description, disabled, tag, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='${device_group}']/post-rulebase/security/rules`;
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -459,8 +459,8 @@ export function registerPanoramaTools(server: McpServer) {
       element += `<action>${action}</action>`;
       if (log_end !== undefined) element += `<log-end>${log_end ? "yes" : "no"}</log-end>`;
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
-      if (profile_group) element += `<profile-setting><group><member>${profile_group}</member></group></profile-setting>`;
-      if (description) element += `<description>${description}</description>`;
+      if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
@@ -479,7 +479,7 @@ export function registerPanoramaTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Move Post Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -500,7 +500,7 @@ export function registerPanoramaTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Post-rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Delete Post Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -533,23 +533,23 @@ export function registerPanoramaTools(server: McpServer) {
       disabled: z.boolean().optional().describe("Create rule in disabled state"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Add Device Group NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, rulebase, name, from_zones, to_zones, source, destination, service, snat_type, snat_address, snat_interface, dnat_address, dnat_port, description, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='${device_group}']/${rulebase}-rulebase/nat/rules`;
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
       element += `<destination>${members(destination)}</destination>`;
-      element += `<service>${service}</service>`;
+      element += `<service>${xmlEscape(service)}</service>`;
       if (snat_type) {
         element += `<source-translation>`;
         if (snat_type === "dynamic-ip-and-port") {
           element += `<dynamic-ip-and-port>`;
           if (snat_interface) {
-            element += `<interface-address><interface>${snat_interface}</interface></interface-address>`;
+            element += `<interface-address><interface>${xmlEscape(snat_interface)}</interface></interface-address>`;
           } else if (snat_address) {
             element += `<translated-address>${members([snat_address])}</translated-address>`;
           }
@@ -560,17 +560,17 @@ export function registerPanoramaTools(server: McpServer) {
           element += `</dynamic-ip>`;
         } else if (snat_type === "static-ip") {
           element += `<static-ip>`;
-          if (snat_address) element += `<translated-address>${snat_address}</translated-address>`;
+          if (snat_address) element += `<translated-address>${xmlEscape(snat_address)}</translated-address>`;
           element += `</static-ip>`;
         }
         element += `</source-translation>`;
       }
       if (dnat_address) {
-        element += `<destination-translation><translated-address>${dnat_address}</translated-address>`;
-        if (dnat_port) element += `<translated-port>${dnat_port}</translated-port>`;
+        element += `<destination-translation><translated-address>${xmlEscape(dnat_address)}</translated-address>`;
+        if (dnat_port) element += `<translated-port>${xmlEscape(dnat_port)}</translated-port>`;
         element += `</destination-translation>`;
       }
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -589,7 +589,7 @@ export function registerPanoramaTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Move Device Group NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, rulebase, name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -611,7 +611,7 @@ export function registerPanoramaTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("NAT rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Delete Device Group NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, rulebase, name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

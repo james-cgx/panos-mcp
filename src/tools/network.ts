@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { executeOpCommand, getConfig, setConfig, deleteConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 export function registerNetworkTools(server: McpServer) {
   server.tool(
@@ -10,7 +10,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Interfaces", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -25,7 +25,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Zones", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -40,7 +40,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Routing Table", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -55,7 +55,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get ARP Table", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -70,7 +70,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get VLANS", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -85,7 +85,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get DHCP Leases", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -100,7 +100,7 @@ export function registerNetworkTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get DNS Proxy", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -118,7 +118,7 @@ export function registerNetworkTools(server: McpServer) {
       virtual_router: z.string().min(1).max(63).optional().describe("Virtual router name (default: 'default')"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Static Routes", readOnlyHint: true, destructiveHint: false },
     async ({ virtual_router, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -142,22 +142,22 @@ export function registerNetworkTools(server: McpServer) {
       virtual_router: z.string().min(1).max(63).optional().describe("Virtual router name (default: 'default')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Static Route", readOnlyHint: false, destructiveHint: true },
     async ({ name, destination, nexthop_type, nexthop_value, interface: iface, metric, virtual_router, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const vr = virtual_router || "default";
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='${vr}']/routing-table/ip/static-route`;
-      let element = `<entry name="${name}">`;
-      element += `<destination>${destination}</destination>`;
+      let element = `<entry name="${xmlEscape(name)}">`;
+      element += `<destination>${xmlEscape(destination)}</destination>`;
       if (nexthop_type === "ip-address" && nexthop_value) {
-        element += `<nexthop><ip-address>${nexthop_value}</ip-address></nexthop>`;
+        element += `<nexthop><ip-address>${xmlEscape(nexthop_value)}</ip-address></nexthop>`;
       } else if (nexthop_type === "next-vr" && nexthop_value) {
-        element += `<nexthop><next-vr>${nexthop_value}</next-vr></nexthop>`;
+        element += `<nexthop><next-vr>${xmlEscape(nexthop_value)}</next-vr></nexthop>`;
       } else if (nexthop_type === "none") {
         element += `<nexthop><none/></nexthop>`;
       }
-      if (iface) element += `<interface>${iface}</interface>`;
+      if (iface) element += `<interface>${xmlEscape(iface)}</interface>`;
       if (metric !== undefined) element += `<metric>${metric}</metric>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -173,7 +173,7 @@ export function registerNetworkTools(server: McpServer) {
       virtual_router: z.string().min(1).max(63).optional().describe("Virtual router name (default: 'default')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Static Route", readOnlyHint: false, destructiveHint: true },
     async ({ name, virtual_router, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

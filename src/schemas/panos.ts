@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export function xmlEscape(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export const configXpath = z
   .string()
   .startsWith("/config")

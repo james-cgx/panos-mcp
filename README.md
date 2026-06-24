@@ -264,6 +264,9 @@ Uses `set_config` to create the address object in the candidate configuration, t
 - **Direct communication only** — All API calls go directly from your machine to your PanOS firewall or Panorama. No traffic is routed through intermediary servers.
 - **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. They are never sent anywhere other than your firewall.
 - **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
+- **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your API key, kept locally in your OS keychain or environment variables under your control.
+- **Third-party sharing** — None. No data is shared with the authors, Anthropic, or any third party beyond the direct connection to your own firewall.
+- **Contact** — For privacy questions or data requests, [open a GitHub issue](https://github.com/apius-tech/Palo-MCP/issues). Maintained by Apius Technologies SA.
 
 ## Disclaimer
 
@@ -281,4 +284,4 @@ To report a security vulnerability, please [open a GitHub issue](https://github.
 
 ## License
 
-ISC
+MIT

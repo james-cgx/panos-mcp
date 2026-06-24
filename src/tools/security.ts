@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerSecurityTools(server: McpServer) {
@@ -14,7 +14,7 @@ export function registerSecurityTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Security Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -29,7 +29,7 @@ export function registerSecurityTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Security Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -44,7 +44,7 @@ export function registerSecurityTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Security Profile Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -59,7 +59,7 @@ export function registerSecurityTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get PBF Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -74,7 +74,7 @@ export function registerSecurityTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Dos Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -89,7 +89,7 @@ export function registerSecurityTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get QoS Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -118,12 +118,12 @@ export function registerSecurityTools(server: McpServer) {
       tag: z.array(z.string().min(1)).optional().describe("Tags to apply to the rule"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Security Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, application, service, action, log_end, log_start, profile_group, description, disabled, tag, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -133,8 +133,8 @@ export function registerSecurityTools(server: McpServer) {
       element += `<action>${action}</action>`;
       if (log_end !== undefined) element += `<log-end>${log_end ? "yes" : "no"}</log-end>`;
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
-      if (profile_group) element += `<profile-setting><group><member>${profile_group}</member></group></profile-setting>`;
-      if (description) element += `<description>${description}</description>`;
+      if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
@@ -152,7 +152,7 @@ export function registerSecurityTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Move Security Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -172,7 +172,7 @@ export function registerSecurityTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Security Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -190,7 +190,7 @@ export function registerSecurityTools(server: McpServer) {
       disabled: z.boolean().describe("true to disable the rule, false to enable it"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set Security Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -218,20 +218,20 @@ export function registerSecurityTools(server: McpServer) {
       disabled: z.boolean().optional().describe("Create rule in disabled state"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add PBF Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, source, action, egress_interface, next_hop_type, next_hop_value, description, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/pbf/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from><zone>${members(from_zones)}</zone></from>`;
       element += `<source>${members(source)}</source>`;
       element += `<action>`;
       if (action === "forward") {
         element += `<forward>`;
-        if (egress_interface) element += `<egress-interface>${egress_interface}</egress-interface>`;
+        if (egress_interface) element += `<egress-interface>${xmlEscape(egress_interface)}</egress-interface>`;
         if (next_hop_type && next_hop_value) {
-          element += `<nexthop><${next_hop_type}>${next_hop_value}</${next_hop_type}></nexthop>`;
+          element += `<nexthop><${next_hop_type}>${xmlEscape(next_hop_value)}</${next_hop_type}></nexthop>`;
         }
         element += `</forward>`;
       } else if (action === "discard") {
@@ -240,7 +240,7 @@ export function registerSecurityTools(server: McpServer) {
         element += `<no-pbf/>`;
       }
       element += `</action>`;
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -257,7 +257,7 @@ export function registerSecurityTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Move PBF Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -277,7 +277,7 @@ export function registerSecurityTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete PBF Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -295,7 +295,7 @@ export function registerSecurityTools(server: McpServer) {
       disabled: z.boolean().describe("true to disable the rule, false to enable it"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set PBF Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -324,12 +324,12 @@ export function registerSecurityTools(server: McpServer) {
       disabled: z.boolean().optional().describe("Create rule in disabled state"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add QoS Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, application, service, action_class, description, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/qos/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -337,7 +337,7 @@ export function registerSecurityTools(server: McpServer) {
       element += `<application>${members(application)}</application>`;
       element += `<service>${members(service)}</service>`;
       element += `<action><class>${action_class}</class></action>`;
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -354,7 +354,7 @@ export function registerSecurityTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Move QoS Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -374,7 +374,7 @@ export function registerSecurityTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete QoS Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -392,7 +392,7 @@ export function registerSecurityTools(server: McpServer) {
       disabled: z.boolean().describe("true to disable the rule, false to enable it"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set QoS Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { setConfig, deleteConfig, commitConfig, commitAll, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { configXpath, deviceGroup, xmlElement, commitDescription, partialAdmin, firewallName } from "../schemas/panos.js";
+import { configXpath, deviceGroup, xmlElement, commitDescription, partialAdmin, firewallName, xmlEscape } from "../schemas/panos.js";
 
 export function registerConfigTools(server: McpServer) {
   server.tool(
@@ -12,7 +12,7 @@ export function registerConfigTools(server: McpServer) {
       element: xmlElement.describe("XML element to set at the xpath location (e.g., '<entry name=\"test-addr\"><ip-netmask>10.0.0.1/32</ip-netmask></entry>')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set Config", readOnlyHint: false, destructiveHint: true },
     async ({ xpath, element, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -28,7 +28,7 @@ export function registerConfigTools(server: McpServer) {
       xpath: configXpath.describe("XPath to the configuration element to delete (e.g., '/config/devices/entry[@name=\"localhost.localdomain\"]/vsys/entry[@name=\"vsys1\"]/address/entry[@name=\"test-addr\"]')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Config", readOnlyHint: false, destructiveHint: true },
     async ({ xpath, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -45,16 +45,16 @@ export function registerConfigTools(server: McpServer) {
       partial_admin: partialAdmin.describe("Commit only changes made by this admin user"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Commit", readOnlyHint: false, destructiveHint: true },
     async ({ description, partial_admin, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit>";
       if (description) {
-        cmd += `<description>${description}</description>`;
+        cmd += `<description>${xmlEscape(description)}</description>`;
       }
       if (partial_admin) {
-        cmd += `<partial><admin><member>${partial_admin}</member></admin></partial>`;
+        cmd += `<partial><admin><member>${xmlEscape(partial_admin)}</member></admin></partial>`;
       }
       cmd += "</commit>";
       const result = await commitConfig(cmd, target);
@@ -70,16 +70,16 @@ export function registerConfigTools(server: McpServer) {
       partial_admin: partialAdmin.describe("Commit only changes made by this admin user"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Commit", readOnlyHint: false, destructiveHint: true },
     async ({ description, partial_admin, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit>";
       if (description) {
-        cmd += `<description>${description}</description>`;
+        cmd += `<description>${xmlEscape(description)}</description>`;
       }
       if (partial_admin) {
-        cmd += `<partial><admin><member>${partial_admin}</member></admin></partial>`;
+        cmd += `<partial><admin><member>${xmlEscape(partial_admin)}</member></admin></partial>`;
       }
       cmd += "</commit>";
       const result = await commitConfig(cmd, target);
@@ -96,14 +96,14 @@ export function registerConfigTools(server: McpServer) {
       include_template: z.boolean().optional().describe("Include template stack (default: false)"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Push To Devices", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, description, include_template, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit-all><shared-policy>";
-      cmd += `<device-group><entry name="${device_group}"/></device-group>`;
+      cmd += `<device-group><entry name="${xmlEscape(device_group)}"/></device-group>`;
       if (description) {
-        cmd += `<description>${description}</description>`;
+        cmd += `<description>${xmlEscape(description)}</description>`;
       }
       if (include_template) {
         cmd += "<include-template>yes</include-template>";

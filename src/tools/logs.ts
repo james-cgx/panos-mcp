@@ -11,7 +11,7 @@ export function registerLogsTools(server: McpServer) {
       query: logQuery.describe("Filter query (e.g., '( addr.src in 10.0.0.0/8 )')"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Traffic Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -28,7 +28,7 @@ export function registerLogsTools(server: McpServer) {
       query: logQuery.describe("Filter query (e.g., '( severity eq critical )')"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Threat Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -45,7 +45,7 @@ export function registerLogsTools(server: McpServer) {
       query: logQuery.describe("Filter query (e.g., '( severity eq critical )')"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get System Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -62,7 +62,7 @@ export function registerLogsTools(server: McpServer) {
       query: logQuery.describe("Filter query"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Config Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -79,7 +79,7 @@ export function registerLogsTools(server: McpServer) {
       query: logQuery.describe("Filter query (e.g., '( action eq block )' or '( category eq malware )')"),
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get URL Filter Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

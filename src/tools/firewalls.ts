@@ -6,7 +6,7 @@ export function registerFirewallTools(server: McpServer) {
     "list_firewalls",
     "[READ-ONLY] Lists all configured firewall targets. Shows names and hosts (never API keys). Indicates whether the 'firewall' parameter is required for other tools.",
     {},
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "List Firewalls", readOnlyHint: true, destructiveHint: false },
     async () => {
       const entries = getFirewallEntries();
       const multi = isMultiFirewall();

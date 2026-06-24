@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerCertificatesTools(server: McpServer) {
@@ -14,7 +14,7 @@ export function registerCertificatesTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Certificates", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -29,7 +29,7 @@ export function registerCertificatesTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Decryption Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -44,7 +44,7 @@ export function registerCertificatesTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Decryption Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -70,12 +70,12 @@ export function registerCertificatesTools(server: McpServer) {
       disabled: z.boolean().optional().describe("Create rule in disabled state"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Decryption Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, service, action, type, decryption_profile, description, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/decryption/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -83,8 +83,8 @@ export function registerCertificatesTools(server: McpServer) {
       element += `<service>${members(service)}</service>`;
       element += `<action>${action}</action>`;
       if (type) element += `<type><${type}/></${"type"}>`;
-      if (decryption_profile) element += `<profile>${decryption_profile}</profile>`;
-      if (description) element += `<description>${description}</description>`;
+      if (decryption_profile) element += `<profile>${xmlEscape(decryption_profile)}</profile>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -101,7 +101,7 @@ export function registerCertificatesTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Move Decryption Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -121,7 +121,7 @@ export function registerCertificatesTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Decryption Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -139,7 +139,7 @@ export function registerCertificatesTools(server: McpServer) {
       disabled: z.boolean().describe("true to disable the rule, false to enable it"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set Decryption Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
