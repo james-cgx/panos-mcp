@@ -140,6 +140,18 @@ Start the server with `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN`; the na
 
 Keep the 1Password Environment scoped to PanOS-MCP values. The server retains only `PANOS_HOST`, `PANOS_API_KEY`, `PANOS_VERIFY_SSL`, and variable names referenced by `api_key_env`.
 
+#### Local deployments — 1Password CLI (no service account token)
+
+For local use you can skip the service account token and let the [1Password CLI](https://developer.1password.com/docs/cli/) inject the Environment using your local `op` session (biometric/app unlock). Install the `op` CLI (beta ≥ `2.33.0-beta.02`, which adds `op run --environment`), sign in, then set **only** `OP_ENVIRONMENT_ID` (no `OP_SERVICE_ACCOUNT_TOKEN`). On startup the server detects this and transparently re-execs itself under:
+
+```bash
+op run --environment "$OP_ENVIRONMENT_ID" -- panos-mcp
+```
+
+`op` then provisions the Environment's variables into the process. If `op` is not on `PATH`, set `OP_CLI_PATH` to its location.
+
+> **Note:** Unlike the service-account path (which retains only the PanOS variables above), `op run` injects the **entire** selected Environment into the process environment for the session. Keep the Environment scoped to PanOS-MCP values.
+
 If you already have API keys, you can write them directly to `firewalls.json` with `api_key` fields — they will be auto-migrated to the keychain on the next server startup:
 
 ```json

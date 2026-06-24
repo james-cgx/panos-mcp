@@ -41,13 +41,16 @@ describe("onepassword environment loader", () => {
     expect(loadSdk).not.toHaveBeenCalled();
   });
 
-  it("throws when only OP_ENVIRONMENT_ID is set", async () => {
-    await expect(
-      loadOnePasswordEnvironment({
-        env: { OP_ENVIRONMENT_ID: "env-id" },
-        createClientImpl: vi.fn() as any,
-      })
-    ).rejects.toThrow("OP_SERVICE_ACCOUNT_TOKEN");
+  it("returns an empty map when only OP_ENVIRONMENT_ID is set (local CLI mode)", async () => {
+    const createClient = vi.fn();
+
+    const variables = await loadOnePasswordEnvironment({
+      env: { OP_ENVIRONMENT_ID: "env-id" },
+      createClientImpl: createClient as any,
+    });
+
+    expect(variables.size).toBe(0);
+    expect(createClient).not.toHaveBeenCalled();
   });
 
   it("throws when only OP_SERVICE_ACCOUNT_TOKEN is set", async () => {
