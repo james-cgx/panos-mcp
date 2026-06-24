@@ -32,7 +32,7 @@ Talk to your firewall in plain English. Some examples:
 - **Configuration management** via XPath-based set/delete with staged commits
 - **Panorama support** for centralized management of device groups, templates, and shared objects
 - **Multi-firewall mode** — manage multiple PA-Series devices or Panorama instances simultaneously
-- **Secure credential storage** — API keys stored in the OS keychain, never in plaintext
+- **Secure credential options** — API keys can be injected from 1Password Environments or stored in the OS keychain, avoiding plaintext when secure storage is available
 - **Input validation** with Zod schemas for early error detection
 - **Safety labels** on every tool: `[READ-ONLY]`, `[MODIFIES CONFIG]`, or `[ADVANCED]`
 
@@ -50,13 +50,20 @@ Talk to your firewall in plain English. Some examples:
 
 1. Download the latest `panos-mcp.mcpb` from [Releases](https://github.com/apius-tech/Palo-MCP/releases)
 2. Double-click the file — Claude Desktop opens an install dialog
-3. Enter your **Firewall Host** and **API Key** when prompted
+3. Enter one complete credential pair: either your **1Password Environment ID** and **1Password Service Account Token**, or your **Firewall Host** and **API Key**
 
-The API key is stored securely in your OS keychain, not in plaintext config files.
+When using 1Password, create an Environment containing `PANOS_HOST` and `PANOS_API_KEY`. The service account token is marked sensitive in the Desktop Extension config.
 
 ### Claude Desktop — npx (single or multiple firewalls)
 
-Add to your `claude_desktop_config.json`:
+Create a 1Password Environment containing:
+
+```text
+PANOS_HOST=your-firewall-or-panorama
+PANOS_API_KEY=your-api-key
+```
+
+Then add the Environment ID and service account token to your `claude_desktop_config.json`:
 
 ```json
 {
@@ -65,8 +72,8 @@ Add to your `claude_desktop_config.json`:
       "command": "npx",
       "args": ["-y", "github:apius-tech/Palo-MCP"],
       "env": {
-        "PANOS_HOST": "your-firewall-or-panorama",
-        "PANOS_API_KEY": "your-api-key"
+        "OP_ENVIRONMENT_ID": "your-1password-environment-id",
+        "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
       }
     }
   }
@@ -75,12 +82,14 @@ Add to your `claude_desktop_config.json`:
 
 Config file location: **macOS** `~/Library/Application Support/Claude/claude_desktop_config.json` · **Windows** `%APPDATA%\Claude\claude_desktop_config.json`
 
+If you are not using 1Password, you can still set `PANOS_HOST` and `PANOS_API_KEY` directly in the MCP server environment.
+
 ### Claude Code (CLI)
 
 ```bash
 claude mcp add panos -- npx -y github:apius-tech/Palo-MCP \
-  --env PANOS_HOST=your-firewall-or-panorama \
-  --env PANOS_API_KEY=your-api-key
+  --env OP_ENVIRONMENT_ID=your-1password-environment-id \
+  --env OP_SERVICE_ACCOUNT_TOKEN=your-1password-service-account-token
 ```
 
 ### Cursor
@@ -94,15 +103,15 @@ Open Cursor Settings (Ctrl+Shift+J) → MCP → Add new MCP server, or add to `~
       "command": "npx",
       "args": ["-y", "github:apius-tech/Palo-MCP"],
       "env": {
-        "PANOS_HOST": "your-firewall-or-panorama",
-        "PANOS_API_KEY": "your-api-key"
+        "OP_ENVIRONMENT_ID": "your-1password-environment-id",
+        "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
       }
     }
   }
 }
 ```
 
-Replace `your-firewall-or-panorama` with your firewall/Panorama IP or hostname, and `your-api-key` with your PanOS API key.
+Replace `your-1password-environment-id` with the Environment ID copied from 1Password, and `your-1password-service-account-token` with a service account token that can read that Environment.
 
 ## Multiple firewalls
 
@@ -115,6 +124,33 @@ npx panos-keygen --host panorama.example.com  --user admin --name panorama
 ```
 
 You will be prompted for the password. The API key is stored in the OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service) — never in the JSON file.
+
+To use 1Password Environments with multiple firewalls, create one Environment variable per firewall API key, then reference the variable name with `api_key_env`:
+
+```json
+{
+  "firewalls": [
+    { "name": "hq-fw", "host": "fw-hq.example.com", "api_key_env": "PANOS_HQ_FW_API_KEY" },
+    { "name": "panorama", "host": "panorama.example.com", "api_key_env": "PANOS_PANORAMA_API_KEY" }
+  ]
+}
+```
+
+Start the server with `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN`; the named API key variables are loaded at startup and kept in memory only.
+
+Keep the 1Password Environment scoped to PanOS-MCP values. The server retains only `PANOS_HOST`, `PANOS_API_KEY`, `PANOS_VERIFY_SSL`, and variable names referenced by `api_key_env`.
+
+#### Local deployments — 1Password CLI (no service account token)
+
+For local use you can skip the service account token and let the [1Password CLI](https://developer.1password.com/docs/cli/) inject the Environment using your local `op` session (biometric/app unlock). Install the `op` CLI (beta ≥ `2.33.0-beta.02`, which adds `op run --environment`), sign in, then set **only** `OP_ENVIRONMENT_ID` (no `OP_SERVICE_ACCOUNT_TOKEN`). On startup the server detects this and transparently re-execs itself under:
+
+```bash
+op run --environment "$OP_ENVIRONMENT_ID" -- panos-mcp
+```
+
+`op` then provisions the Environment's variables into the process. If `op` is not on `PATH`, set `OP_CLI_PATH` to its location.
+
+> **Note:** Unlike the service-account path (which retains only the PanOS variables above), `op run` injects the **entire** selected Environment into the process environment for the session. Keep the Environment scoped to PanOS-MCP values.
 
 If you already have API keys, you can write them directly to `firewalls.json` with `api_key` fields — they will be auto-migrated to the keychain on the next server startup:
 
@@ -129,7 +165,7 @@ If you already have API keys, you can write them directly to `firewalls.json` wi
 
 Override the config path with `PANOS_FIREWALLS_CONFIG=/custom/path.json` if needed. `name` is the identifier you pass to tools (max 63 chars); `host` may include or omit the `https://` prefix.
 
-When multiple entries are configured, every tool accepts a `firewall: <name>` parameter — required in multi-mode, optional when a single entry or `PANOS_HOST`/`PANOS_API_KEY` env vars are used. Ask the model to call `list_firewalls` to see which targets are configured.
+When multiple entries are configured, every tool accepts a `firewall: <name>` parameter — required in multi-mode, optional when a single entry or environment-sourced `PANOS_HOST`/`PANOS_API_KEY` pair is used. Ask the model to call `list_firewalls` to see which targets are configured.
 
 > **Linux headless servers:** If no keychain daemon is available (e.g. servers without `libsecret`), API keys fall back to plaintext in `firewalls.json` with a warning. Restrict the file with `chmod 600 ~/.config/panos-mcp/firewalls.json` in that case.
 
@@ -209,7 +245,7 @@ Self-signed firewall certificates are accepted through the proxy tunnel (the ser
 git clone https://github.com/apius-tech/Palo-MCP.git
 cd Palo-MCP
 npm install
-cp .env.example .env   # fill in PANOS_HOST and PANOS_API_KEY
+# Configure OP_ENVIRONMENT_ID/OP_SERVICE_ACCOUNT_TOKEN, or PANOS_HOST/PANOS_API_KEY
 ```
 
 ```bash
@@ -238,9 +274,9 @@ Uses `set_config` to create the address object in the candidate configuration, t
 
 - **No data collection** — This extension does not collect, store, or transmit any data to third parties.
 - **Direct communication only** — All API calls go directly from your machine to your PanOS firewall or Panorama. No traffic is routed through intermediary servers.
-- **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. They are never sent anywhere other than your firewall.
+- **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. When 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` are likewise stored locally under your control, and secrets fetched from 1Password are held only in memory for the session. Credentials are never sent anywhere other than your firewall (and, for 1Password injection, your own 1Password account).
 - **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
-- **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your API key, kept locally in your OS keychain or environment variables under your control.
+- **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your credentials — API keys and, when 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` — kept locally in your OS keychain or environment variables under your control.
 - **Third-party sharing** — None. No data is shared with the authors, Anthropic, or any third party beyond the direct connection to your own firewall.
 - **Contact** — For privacy questions or data requests, [open a GitHub issue](https://github.com/apius-tech/Palo-MCP/issues). Maintained by Apius Technologies SA.
 

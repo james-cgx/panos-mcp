@@ -2,8 +2,14 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loadFirewallConfig } from "./config/firewalls.js";
+import {
+  getExpectedEnvironmentVariableNames,
+  loadFirewallConfig,
+  setInjectedEnvironment,
+} from "./config/firewalls.js";
 import { isKeychainAvailable } from "./config/keychain.js";
+import { loadOnePasswordEnvironment } from "./config/onepassword.js";
+import { maybeRelaunchUnderOpCli } from "./config/onepassword-cli.js";
 import { describeProxy } from "./api/proxy.js";
 
 import { registerFirewallTools } from "./tools/firewalls.js";
@@ -64,6 +70,24 @@ registerConfigTools(server);
 registerUtilityTools(server);
 
 async function main() {
+  // Local 1Password CLI mode: re-exec under `op run --environment <id>` so the
+  // CLI injects the Environment's variables into our env. The wrapped child sets
+  // PANOS_OP_WRAPPED and proceeds normally below.
+  const relaunch = await maybeRelaunchUnderOpCli();
+  if (relaunch.relaunched) {
+    process.exit(relaunch.exitCode ?? 0);
+  }
+
+  const onePasswordEnvironment = await loadOnePasswordEnvironment({
+    allowedNames: getExpectedEnvironmentVariableNames(),
+  });
+  setInjectedEnvironment(onePasswordEnvironment);
+  if (onePasswordEnvironment.size > 0) {
+    process.stderr.write(
+      `[panos-mcp] Loaded ${onePasswordEnvironment.size} environment variable(s) from 1Password Environment\n`
+    );
+  }
+
   await loadFirewallConfig();
   if (!isKeychainAvailable()) {
     process.stderr.write(
@@ -80,4 +104,7 @@ async function main() {
   await server.connect(transport);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});
