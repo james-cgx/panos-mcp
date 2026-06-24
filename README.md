@@ -262,9 +262,9 @@ Uses `set_config` to create the address object in the candidate configuration, t
 
 - **No data collection** — This extension does not collect, store, or transmit any data to third parties.
 - **Direct communication only** — All API calls go directly from your machine to your PanOS firewall or Panorama. No traffic is routed through intermediary servers.
-- **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. They are never sent anywhere other than your firewall.
+- **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. When 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` are likewise stored locally under your control, and secrets fetched from 1Password are held only in memory for the session. Credentials are never sent anywhere other than your firewall (and, for 1Password injection, your own 1Password account).
 - **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
-- **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your API key, kept locally in your OS keychain or environment variables under your control.
+- **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your credentials — API keys and, when 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` — kept locally in your OS keychain or environment variables under your control.
 - **Third-party sharing** — None. No data is shared with the authors, Anthropic, or any third party beyond the direct connection to your own firewall.
 - **Contact** — For privacy questions or data requests, [open a GitHub issue](https://github.com/apius-tech/Palo-MCP/issues). Maintained by Apius Technologies SA.
 
