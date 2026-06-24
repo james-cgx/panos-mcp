@@ -278,7 +278,7 @@ Uses `set_config` to create the address object in the candidate configuration, t
 - **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
 - **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your credentials — API keys and, when 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` — kept locally in your OS keychain or environment variables under your control.
 - **Third-party sharing** — None. No data is shared with the authors, Anthropic, or any third party beyond the direct connection to your own firewall.
-- **Contact** — This extension collects and retains no personal data, so there are no data-subject requests to fulfill. For privacy questions, use [GitHub Private Vulnerability Reporting](https://github.com/james-cgx/panos-mcp/security/advisories/new) rather than a public issue, so nothing sensitive is exposed. Maintained by Apius Technologies SA.
+- **Contact** — This extension collects and retains no personal data, so there are no data-subject requests to fulfill. For general privacy questions, [open a GitHub issue](https://github.com/james-cgx/panos-mcp/issues) — an informational query only; please don't include any personal data. Security vulnerabilities go through the separate private channel in [SECURITY.md](SECURITY.md). Maintained by Apius Technologies SA.
 
 ## Disclaimer
 
