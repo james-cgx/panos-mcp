@@ -44,7 +44,9 @@ function defaultLookupOp(env: EnvLike): string | null {
     }
   }
 
-  const exeNames = process.platform === "win32" ? ["op.exe", "op.cmd", "op"] : ["op"];
+  // 1Password ships op.exe on Windows. Avoid .cmd/.bat: Node throws EINVAL when
+  // spawning them without shell:true (CVE-2024-27980 hardening).
+  const exeNames = process.platform === "win32" ? ["op.exe", "op"] : ["op"];
   const pathDirs = (env.PATH ?? env.Path ?? "").split(delimiter).filter(Boolean);
   for (const dir of pathDirs) {
     for (const exe of exeNames) {
