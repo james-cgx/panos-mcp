@@ -208,7 +208,9 @@ export async function saveFirewallEntry(entry: FirewallEntry): Promise<void> {
   const configPath = getConfigPath();
   mkdirSync(dirname(configPath), { recursive: true, mode: 0o700 });
 
-  let config: { firewalls: Array<{ name: string; host: string; api_key?: string }> };
+  let config: {
+    firewalls: Array<{ name: string; host: string; api_key?: string; verify_ssl?: boolean }>;
+  };
   try {
     const raw = readFileSync(configPath, "utf-8");
     config = JSON.parse(raw);
@@ -217,16 +219,19 @@ export async function saveFirewallEntry(entry: FirewallEntry): Promise<void> {
     config = { firewalls: [] };
   }
 
+  const verifySsl = entry.verify_ssl ? { verify_ssl: true } : {};
+
   if (isKeychainAvailable()) {
     await setKey(entry.name, entry.api_key);
-    const fileEntry = { name: entry.name, host: entry.host };
+    const fileEntry = { name: entry.name, host: entry.host, ...verifySsl };
     const idx = config.firewalls.findIndex((e) => e.name === entry.name);
     if (idx >= 0) config.firewalls[idx] = fileEntry;
     else config.firewalls.push(fileEntry);
   } else {
+    const fileEntry = { name: entry.name, host: entry.host, api_key: entry.api_key, ...verifySsl };
     const idx = config.firewalls.findIndex((e) => e.name === entry.name);
-    if (idx >= 0) config.firewalls[idx] = { name: entry.name, host: entry.host, api_key: entry.api_key };
-    else config.firewalls.push({ name: entry.name, host: entry.host, api_key: entry.api_key });
+    if (idx >= 0) config.firewalls[idx] = fileEntry;
+    else config.firewalls.push(fileEntry);
   }
 
   writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n", { mode: 0o600 });

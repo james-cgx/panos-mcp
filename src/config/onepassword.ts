@@ -62,11 +62,11 @@ export async function loadOnePasswordEnvironment(
     throw new Error("OP_SERVICE_ACCOUNT_TOKEN is required when OP_ENVIRONMENT_ID is set");
   }
 
-  const createClientImpl =
-    options.createClientImpl ??
-    (await (options.loadSdkImpl ?? (async () => import("@1password/sdk")))()).createClient;
-
   try {
+    const createClientImpl =
+      options.createClientImpl ??
+      (await (options.loadSdkImpl ?? (async () => import("@1password/sdk")))()).createClient;
+
     const client = (await createClientImpl({
       auth: serviceAccountToken,
       integrationName: "panos-mcp",

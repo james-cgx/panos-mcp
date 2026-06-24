@@ -315,6 +315,16 @@ describe("firewalls config", () => {
       expect(data.firewalls[0]).not.toHaveProperty("api_key");
     });
 
+    it("persists verify_ssl to JSON so it survives a reload", async () => {
+      await saveFirewallEntry({ name: "secure-fw", host: "10.0.4.1", api_key: "key4", verify_ssl: true });
+
+      const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
+      expect(data.firewalls[0].verify_ssl).toBe(true);
+
+      await loadFirewallConfig();
+      expect(resolveFirewall("secure-fw")?.verify_ssl).toBe(true);
+    });
+
     it("writes api_key to JSON when keychain unavailable", async () => {
       vi.mocked(isKeychainAvailable).mockReturnValue(false);
 

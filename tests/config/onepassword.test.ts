@@ -113,6 +113,22 @@ describe("onepassword environment loader", () => {
   });
 
 
+  it("normalizes and redacts errors when the SDK fails to load", async () => {
+    const loadSdk = vi.fn().mockRejectedValue(new Error("cannot load module ops_secret_token"));
+
+    const run = () =>
+      loadOnePasswordEnvironment({
+        env: {
+          OP_ENVIRONMENT_ID: "env-id",
+          OP_SERVICE_ACCOUNT_TOKEN: "ops_secret_token",
+        },
+        loadSdkImpl: loadSdk as any,
+      });
+
+    await expect(run()).rejects.toThrow("Failed to load 1Password Environment");
+    await expect(run()).rejects.not.toThrow("ops_secret_token");
+  });
+
   it("redacts the service account token from SDK errors", async () => {
     const createClient = vi.fn().mockRejectedValue(new Error("bad token ops_secret_token"));
 
