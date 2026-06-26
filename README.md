@@ -1,15 +1,14 @@
-# PanOS MCP Server
+# PAN-OS MCP Server
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/james-cgx/panos-mcp)](https://github.com/james-cgx/panos-mcp/stargazers)
 [![Tests](https://img.shields.io/badge/tests-133%20passing-brightgreen)](https://github.com/james-cgx/panos-mcp/actions)
-[![GitHub release](https://img.shields.io/github/v/release/james-cgx/panos-mcp)](https://github.com/james-cgx/panos-mcp/releases/latest)
 
-**Control your Palo Alto Networks firewall with AI.** PanOS MCP is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that connects AI assistants — Claude, Cursor, and others — directly to PAN-OS firewalls and Panorama via the PAN-OS XML API. Ask questions, inspect policies, and make configuration changes in plain English instead of navigating the GUI or writing API scripts.
+**Control your Palo Alto Networks firewall with AI.** PAN-OS MCP is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that connects AI assistants — Claude, Cursor, and others — directly to PAN-OS firewalls and Panorama via the PAN-OS XML API. Ask questions, inspect policies, and make configuration changes in plain English instead of navigating the GUI or writing API scripts.
 
 Supports **PA-Series firewalls** (PA-220, PA-415, PA-440, PA-445, PA-450, PA-460, PA-1400, PA-3400, PA-5400, PA-7500 and more), **VM-Series**, **CN-Series**, and **Panorama** — any device running PAN-OS with API access enabled.
 
-> **Warning:** This server gives an AI model direct access to your firewall configuration via the PanOS API. AI models can make mistakes, misinterpret instructions, or take unintended actions that may disrupt network traffic, modify security policies, or cause outages. **Use at your own risk.** Always review AI-proposed changes before committing, use a read-only API key where possible, and never run against production firewalls without understanding the consequences.
+> **Warning:** This server gives an AI model direct access to your firewall configuration via the PAN-OS API. AI models can make mistakes, misinterpret instructions, or take unintended actions that may disrupt network traffic, modify security policies, or cause outages. **Use at your own risk.** Always review AI-proposed changes before committing, use a read-only API key where possible, and never run against production firewalls without understanding the consequences.
 
 **117 tools across 16 modules** covering firewall management, monitoring, and configuration changes — all from within your AI assistant.
 
@@ -38,9 +37,9 @@ Talk to your firewall in plain English. Some examples:
 
 ## Prerequisites
 
-- Node.js 18+
-- A PanOS firewall or Panorama appliance with API access enabled
-- A PanOS API key ([how to generate](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/get-your-api-key))
+- Node.js 22+
+- A PAN-OS firewall or Panorama appliance with API access enabled
+- A PAN-OS API key ([how to generate](https://docs.paloaltonetworks.com/ngfw/api/getting-started/explore-xmlapi))
 
 ## Quick Start
 
@@ -138,7 +137,7 @@ To use 1Password Environments with multiple firewalls, create one Environment va
 
 Start the server with `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN`; the named API key variables are loaded at startup and kept in memory only.
 
-Keep the 1Password Environment scoped to PanOS-MCP values. The server retains only `PANOS_HOST`, `PANOS_API_KEY`, `PANOS_VERIFY_SSL`, and variable names referenced by `api_key_env`.
+Keep the 1Password Environment scoped to PAN-OS MCP values. The server retains only `PANOS_HOST`, `PANOS_API_KEY`, `PANOS_VERIFY_SSL`, and variable names referenced by `api_key_env`.
 
 #### Local deployments — 1Password CLI (no service account token)
 
@@ -150,7 +149,7 @@ op run --environment "$OP_ENVIRONMENT_ID" -- panos-mcp
 
 `op` then provisions the Environment's variables into the process. If `op` is not on `PATH`, set `OP_CLI_PATH` to its location.
 
-> **Note:** Unlike the service-account path (which retains only the PanOS variables above), `op run` injects the **entire** selected Environment into the process environment for the session. Keep the Environment scoped to PanOS-MCP values.
+> **Note:** Unlike the service-account path (which retains only the PAN-OS variables above), `op run` injects the **entire** selected Environment into the process environment for the session. Keep the Environment scoped to PAN-OS MCP values.
 
 If you already have API keys, you can write them directly to `firewalls.json` with `api_key` fields — they will be auto-migrated to the keychain on the next server startup:
 
@@ -200,7 +199,7 @@ Every tool is labeled to indicate its impact:
 
 ## API Key
 
-Generate a PanOS API key from the firewall web UI or CLI:
+Generate a PAN-OS API key from the firewall web UI or CLI:
 
 **Web UI:** Device → Administrators → your admin user → Generate API Key
 
@@ -209,7 +208,7 @@ Generate a PanOS API key from the firewall web UI or CLI:
 curl -k 'https://YOUR-FIREWALL/api/?type=keygen&user=admin&password=YOUR-PASSWORD'
 ```
 
-See [PanOS documentation](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/get-your-api-key) for details.
+See [PAN-OS documentation](https://docs.paloaltonetworks.com/ngfw/api/getting-started/explore-xmlapi) for details.
 
 ## Proxy support
 
@@ -237,7 +236,7 @@ Example — SOCKS5 with remote DNS:
 export PANOS_PROXY=socks5h://10.0.1.168:2080
 ```
 
-Self-signed firewall certificates are accepted through the proxy tunnel (the server already disables cert validation for the PanOS target).
+Self-signed firewall certificates are accepted through the proxy tunnel (the server already disables cert validation for the PAN-OS target).
 
 ## Development
 
@@ -273,7 +272,7 @@ Uses `set_config` to create the address object in the candidate configuration, t
 ## Privacy
 
 - **No data collection** — This extension does not collect, store, or transmit any data to third parties.
-- **Direct communication only** — All API calls go directly from your machine to your PanOS firewall or Panorama. No traffic is routed through intermediary servers.
+- **Direct communication only** — All API calls go directly from your machine to your PAN-OS firewall or Panorama. No traffic is routed through intermediary servers.
 - **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. When 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` are likewise stored locally under your control, and secrets fetched from 1Password are held only in memory for the session. Credentials are never sent anywhere other than your firewall (and, for 1Password injection, your own 1Password account).
 - **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
 - **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your credentials — API keys and, when 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` — kept locally in your OS keychain or environment variables under your control.
