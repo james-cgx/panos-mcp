@@ -4,72 +4,55 @@
 [![GitHub stars](https://img.shields.io/github/stars/james-cgx/panos-mcp)](https://github.com/james-cgx/panos-mcp/stargazers)
 [![Tests](https://img.shields.io/badge/tests-133%20passing-brightgreen)](https://github.com/james-cgx/panos-mcp/actions)
 
-**Control your Palo Alto Networks firewall with AI.** PAN-OS MCP is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that connects AI assistants — Claude, Cursor, and others — directly to PAN-OS firewalls and Panorama via the PAN-OS XML API. Ask questions, inspect policies, and make configuration changes in plain English instead of navigating the GUI or writing API scripts.
+PAN-OS MCP is a [Model Context Protocol](https://modelcontextprotocol.io) server for Palo Alto Networks PAN-OS firewalls and Panorama. It lets MCP-capable assistants inspect firewall state, read logs, manage objects and policies, and commit configuration through the PAN-OS XML API.
 
-Supports **PA-Series firewalls** (PA-220, PA-415, PA-440, PA-445, PA-450, PA-460, PA-1400, PA-3400, PA-5400, PA-7500 and more), **VM-Series**, **CN-Series**, and **Panorama** — any device running PAN-OS with API access enabled.
-
-> **Warning:** This server gives an AI model direct access to your firewall configuration via the PAN-OS API. AI models can make mistakes, misinterpret instructions, or take unintended actions that may disrupt network traffic, modify security policies, or cause outages. **Use at your own risk.** Always review AI-proposed changes before committing, use a read-only API key where possible, and never run against production firewalls without understanding the consequences.
-
-**117 tools across 16 modules** covering firewall management, monitoring, and configuration changes — all from within your AI assistant.
-
-## What you can do
-
-Talk to your firewall in plain English. Some examples:
-
-- *"Show me all security rules that allow traffic from the internet to the DMZ"*
-- *"Which GlobalProtect users are currently connected?"*
-- *"Create an address object for 10.10.0.0/24 called corp-network and add it to the allow-internal group"*
-- *"Check HA status — is the standby firewall in sync?"*
-- *"Show me the last 50 threat log entries"*
-- *"Move the block-social-media rule above the allow-web rule and commit"*
-- *"List all IPSec tunnels and their current state"*
-- *"What software version is running on each managed device in Panorama?"*
+> Warning: this server can give an AI model access to live network infrastructure. Use read-only API keys where possible, review proposed changes before committing, and test in a lab before using it against production firewalls.
 
 ## Features
 
-- **Read-only inspection** of firewall state, policies, objects, logs, and more
-- **Configuration management** via XPath-based set/delete with staged commits
-- **Panorama support** for centralized management of device groups, templates, and shared objects
-- **Multi-firewall mode** — manage multiple PA-Series devices or Panorama instances simultaneously
-- **Secure credential options** — API keys can be injected from 1Password Environments or stored in the OS keychain, avoiding plaintext when secure storage is available
-- **Input validation** with Zod schemas for early error detection
-- **Safety labels** on every tool: `[READ-ONLY]`, `[MODIFIES CONFIG]`, or `[ADVANCED]`
+- 117 tools across 16 modules for system, network, security, NAT, objects, Panorama, logs, VPN, certificates, licenses, and utility operations.
+- Read-only inspection plus explicit configuration modification and commit tools.
+- Single-firewall and multi-firewall modes.
+- 1Password Environment support for API key injection.
+- OS keychain support for multi-firewall API keys.
+- Zod validation for tool inputs.
+- Safety labels on tools: `[READ-ONLY]`, `[MODIFIES CONFIG]`, and `[ADVANCED]`.
+- Proxy support for firewalls reachable through HTTP, HTTPS, SOCKS4, or SOCKS5 proxies.
 
-## Prerequisites
+## Requirements
 
-- Node.js 22+
-- A PAN-OS firewall or Panorama appliance with API access enabled
-- A PAN-OS API key ([how to generate](https://docs.paloaltonetworks.com/ngfw/api/getting-started/explore-xmlapi))
+- Node.js 22.19 or newer.
+- pnpm 11.9.0 for repository development.
+- A PAN-OS firewall or Panorama appliance with XML API access enabled.
+- A PAN-OS API key.
 
 ## Quick Start
 
-> **Single firewall vs. multi-firewall:** The Desktop Extension supports **one firewall** configured at install time. For managing multiple firewalls or Panorama instances simultaneously, use the npx or Claude Code CLI installation with the `panos-keygen` setup described in [Multiple firewalls](#multiple-firewalls).
-
-### Claude Desktop — Desktop Extension (single firewall)
-
-1. Download the latest `panos-mcp.mcpb` from [Releases](https://github.com/james-cgx/panos-mcp/releases)
-2. Double-click the file — Claude Desktop opens an install dialog
-3. Enter one complete credential pair: either your **1Password Environment ID** and **1Password Service Account Token**, or your **Firewall Host** and **API Key**
-
-When using 1Password, create an Environment containing `PANOS_HOST` and `PANOS_API_KEY`. The service account token is marked sensitive in the Desktop Extension config.
-
-### Claude Desktop — npx (single or multiple firewalls)
-
-Create a 1Password Environment containing:
-
-```text
-PANOS_HOST=your-firewall-or-panorama
-PANOS_API_KEY=your-api-key
-```
-
-Then add the Environment ID and service account token to your `claude_desktop_config.json`:
+For a single firewall, provide credentials directly through environment variables:
 
 ```json
 {
   "mcpServers": {
     "panos": {
-      "command": "npx",
-      "args": ["-y", "github:james-cgx/panos-mcp"],
+      "command": "pnpm",
+      "args": ["dlx", "github:james-cgx/panos-mcp"],
+      "env": {
+        "PANOS_HOST": "fw.example.com",
+        "PANOS_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+For 1Password Environment injection, create an Environment containing `PANOS_HOST` and `PANOS_API_KEY`, then provide the Environment ID and service account token:
+
+```json
+{
+  "mcpServers": {
+    "panos": {
+      "command": "pnpm",
+      "args": ["dlx", "github:james-cgx/panos-mcp"],
       "env": {
         "OP_ENVIRONMENT_ID": "your-1password-environment-id",
         "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
@@ -79,219 +62,51 @@ Then add the Environment ID and service account token to your `claude_desktop_co
 }
 ```
 
-Config file location: **macOS** `~/Library/Application Support/Claude/claude_desktop_config.json` · **Windows** `%APPDATA%\Claude\claude_desktop_config.json`
-
-If you are not using 1Password, you can still set `PANOS_HOST` and `PANOS_API_KEY` directly in the MCP server environment.
-
-### Claude Code (CLI)
-
-```bash
-claude mcp add panos -- npx -y github:james-cgx/panos-mcp \
-  --env OP_ENVIRONMENT_ID=your-1password-environment-id \
-  --env OP_SERVICE_ACCOUNT_TOKEN=your-1password-service-account-token
-```
-
-### Cursor
-
-Open Cursor Settings (Ctrl+Shift+J) → MCP → Add new MCP server, or add to `~/.cursor/mcp.json`:
+For local 1Password CLI injection, install and sign in to the `op` CLI, then provide only the Environment ID. The server will relaunch itself under `op run --environment` so the local 1Password session injects `PANOS_HOST` and `PANOS_API_KEY`:
 
 ```json
 {
   "mcpServers": {
     "panos": {
-      "command": "npx",
-      "args": ["-y", "github:james-cgx/panos-mcp"],
+      "command": "pnpm",
+      "args": ["dlx", "github:james-cgx/panos-mcp"],
       "env": {
-        "OP_ENVIRONMENT_ID": "your-1password-environment-id",
-        "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
+        "OP_ENVIRONMENT_ID": "your-1password-environment-id"
       }
     }
   }
 }
 ```
 
-Replace `your-1password-environment-id` with the Environment ID copied from 1Password, and `your-1password-service-account-token` with a service account token that can read that Environment.
-
-## Multiple firewalls
-
-For managing more than one firewall or Panorama, use the `panos-keygen` CLI to register each one. It generates an API key, stores it in your OS keychain, and writes the host entry to `~/.config/panos-mcp/firewalls.json`:
-
-```bash
-npx panos-keygen --host fw-hq.example.com     --user admin --name hq-fw
-npx panos-keygen --host fw-branch.example.com --user admin --name branch-fw
-npx panos-keygen --host panorama.example.com  --user admin --name panorama
-```
-
-You will be prompted for the password. The API key is stored in the OS keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service) — never in the JSON file.
-
-To use 1Password Environments with multiple firewalls, create one Environment variable per firewall API key, then reference the variable name with `api_key_env`:
-
-```json
-{
-  "firewalls": [
-    { "name": "hq-fw", "host": "fw-hq.example.com", "api_key_env": "PANOS_HQ_FW_API_KEY" },
-    { "name": "panorama", "host": "panorama.example.com", "api_key_env": "PANOS_PANORAMA_API_KEY" }
-  ]
-}
-```
-
-Start the server with `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN`; the named API key variables are loaded at startup and kept in memory only.
-
-Keep the 1Password Environment scoped to PAN-OS MCP values. The server retains only `PANOS_HOST`, `PANOS_API_KEY`, `PANOS_VERIFY_SSL`, and variable names referenced by `api_key_env`.
-
-#### Local deployments — 1Password CLI (no service account token)
-
-For local use you can skip the service account token and let the [1Password CLI](https://developer.1password.com/docs/cli/) inject the Environment using your local `op` session (biometric/app unlock). Install the `op` CLI (beta ≥ `2.33.0-beta.02`, which adds `op run --environment`), sign in, then set **only** `OP_ENVIRONMENT_ID` (no `OP_SERVICE_ACCOUNT_TOKEN`). On startup the server detects this and transparently re-execs itself under:
-
-```bash
-op run --environment "$OP_ENVIRONMENT_ID" -- panos-mcp
-```
-
-`op` then provisions the Environment's variables into the process. If `op` is not on `PATH`, set `OP_CLI_PATH` to its location.
-
-> **Note:** Unlike the service-account path (which retains only the PAN-OS variables above), `op run` injects the **entire** selected Environment into the process environment for the session. Keep the Environment scoped to PAN-OS MCP values.
-
-If you already have API keys, you can write them directly to `firewalls.json` with `api_key` fields — they will be auto-migrated to the keychain on the next server startup:
-
-```json
-{
-  "firewalls": [
-    { "name": "hq-fw",  "host": "fw-hq.example.com",  "api_key": "LUFRPT1..." },
-    { "name": "panorama", "host": "panorama.example.com", "api_key": "LUFRPT2..." }
-  ]
-}
-```
-
-Override the config path with `PANOS_FIREWALLS_CONFIG=/custom/path.json` if needed. `name` is the identifier you pass to tools (max 63 chars); `host` may include or omit the `https://` prefix.
-
-When multiple entries are configured, every tool accepts a `firewall: <name>` parameter — required in multi-mode, optional when a single entry or environment-sourced `PANOS_HOST`/`PANOS_API_KEY` pair is used. Ask the model to call `list_firewalls` to see which targets are configured.
-
-> **Linux headless servers:** If no keychain daemon is available (e.g. servers without `libsecret`), API keys fall back to plaintext in `firewalls.json` with a warning. Restrict the file with `chmod 600 ~/.config/panos-mcp/firewalls.json` in that case.
-
-## Tool Categories
-
-| Category | Tools | Description |
-|----------|-------|-------------|
-| System | 4 | Firewall info, HA status, sessions, resources |
-| Network | 10 | Interfaces, zones, routing, ARP, VLANs, DHCP, DNS proxy, static routes (get, add, delete) |
-| Security | 18 | Security rules CRUD, profiles, profile groups, PBF rules CRUD, DoS, QoS rules CRUD |
-| Objects | 16 | Address/service objects and groups (get, add, delete), application filters, tags (get, add, delete) |
-| NAT | 5 | NAT rules (get, add, move, delete, enable/disable) |
-| User-ID | 3 | User-IP mappings, groups, config |
-| Admin | 3 | Admins, roles, auth profiles |
-| VPN | 3 | IPSec tunnels, GlobalProtect users and config |
-| Panorama | 29 | Device groups, templates, shared objects, pre/post rules CRUD, DG NAT rules CRUD, push status, HA |
-| Logs | 5 | Traffic, threat, system, URL, and config logs |
-| Threat | 4 | WildFire, antivirus, content versions, URL categories |
-| Certificates | 7 | Certificates, decryption rules (get, add, move, delete, enable/disable) and profiles |
-| Licenses | 2 | License info and usage |
-| Config | 5 | Set/delete config, commit, Panorama commit, Panorama push |
-| Utility | 2 | Arbitrary op commands, XPath config reads |
-| Firewalls | 1 | List configured firewall targets |
-
-## Safety Labels
-
-Every tool is labeled to indicate its impact:
-
-- **`[READ-ONLY]`** — Only reads data; no changes to the firewall
-- **`[MODIFIES CONFIG]`** — Stages or commits configuration changes that affect live traffic
-- **`[ADVANCED]`** — Accepts arbitrary commands; impact depends on the input
-
-## API Key
-
-Generate a PAN-OS API key from the firewall web UI or CLI:
-
-**Web UI:** Device → Administrators → your admin user → Generate API Key
-
-**CLI:**
-```bash
-curl -k 'https://YOUR-FIREWALL/api/?type=keygen&user=admin&password=YOUR-PASSWORD'
-```
-
-See [PAN-OS documentation](https://docs.paloaltonetworks.com/ngfw/api/getting-started/explore-xmlapi) for details.
-
-## Proxy support
-
-If your firewall is reachable only via a proxy (management network behind a jump host, remote access via SOCKS5, corporate HTTP proxy), set one of the following environment variables before starting the server:
-
-| Variable | Purpose |
-|---|---|
-| `PANOS_PROXY` | **Explicit override.** Used regardless of `NO_PROXY`. Recommended for MCP deployments. |
-| `HTTPS_PROXY` / `https_proxy` | Standard — same semantics as most HTTP clients. |
-| `HTTP_PROXY` / `http_proxy` | Fallback. |
-| `ALL_PROXY` / `all_proxy` | Fallback (common for SOCKS). |
-| `NO_PROXY` / `no_proxy` | Comma-separated list of hostnames/suffixes to bypass. `*` disables proxying entirely. Ignored when `PANOS_PROXY` is set. |
-
-Supported URL schemes:
-
-- `http://[user:pass@]host:port` — HTTP CONNECT proxy
-- `https://[user:pass@]host:port` — HTTPS CONNECT proxy
-- `socks5://[user:pass@]host:port` — SOCKS5, **client-side** DNS
-- `socks5h://[user:pass@]host:port` — SOCKS5, **proxy-side** DNS (use this when the firewall hostname only resolves on the far side of the proxy)
-- `socks4://[user@]host:port` / `socks4a://[user@]host:port`
-
-Example — SOCKS5 with remote DNS:
-
-```bash
-export PANOS_PROXY=socks5h://10.0.1.168:2080
-```
-
-Self-signed firewall certificates are accepted through the proxy tunnel (the server already disables cert validation for the PAN-OS target).
+The Desktop Extension (`.mcpb`) supports one firewall configured at install time. For multiple firewalls or Panorama instances, use the CLI configuration described in [Configuration](docs/configuration.md).
 
 ## Development
 
 ```bash
-git clone https://github.com/james-cgx/panos-mcp.git
-cd panos-mcp
-npm install
-# Configure OP_ENVIRONMENT_ID/OP_SERVICE_ACCOUNT_TOKEN, or PANOS_HOST/PANOS_API_KEY
+pnpm install
+pnpm run build
+pnpm test
+pnpm run start
 ```
+
+Useful scripts:
 
 ```bash
-npm run build           # compile TypeScript
-npm run dev             # watch mode (rebuild on changes)
-npm test                # run tests
-npm run start           # run the server
-npm run pack:extension  # build Desktop Extension (.mcpb)
+pnpm run dev             # TypeScript watch mode
+pnpm run keygen          # Generate and save a firewall API key
+pnpm run pack:extension  # Build the Desktop Extension package
+pnpm audit --prod        # Audit production dependencies
 ```
 
-## Examples
+## Documentation
 
-**"Show me the firewall system info"**
-
-Uses `get_firewall_info` to retrieve hostname, model, serial number, and software version.
-
-**"List all security rules on the firewall"**
-
-Uses `get_security_rules` to retrieve the full security policy rulebase.
-
-**"Create an address object for the 10.0.1.0/24 subnet called lab-network, then commit"**
-
-Uses `set_config` to create the address object in the candidate configuration, then `commit` to activate the change on the running firewall.
+- [Configuration](docs/configuration.md) - environment variables, 1Password, keychain storage, multi-firewall mode, and proxy support.
+- [Security policy](SECURITY.md) - private vulnerability reporting process.
+- [Agent guidance](AGENTS.md) - repository structure and maintenance notes for coding agents.
 
 ## Privacy
 
-- **No data collection** — This extension does not collect, store, or transmit any data to third parties.
-- **Direct communication only** — All API calls go directly from your machine to your PAN-OS firewall or Panorama. No traffic is routed through intermediary servers.
-- **Local credential storage** — API keys are stored in your OS keychain (Desktop Extension and multi-firewall mode via `panos-keygen`), or in local environment variables. When 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` are likewise stored locally under your control, and secrets fetched from 1Password are held only in memory for the session. Credentials are never sent anywhere other than your firewall (and, for 1Password injection, your own 1Password account).
-- **No telemetry or analytics** — This extension contains no tracking, telemetry, or analytics of any kind.
-- **Data retention** — No data is retained by the extension or its authors. Firewall responses exist only transiently in memory to serve the active request and are not persisted, logged, or shared. The only data stored at rest is your credentials — API keys and, when 1Password injection is configured, your `OP_ENVIRONMENT_ID` and `OP_SERVICE_ACCOUNT_TOKEN` — kept locally in your OS keychain or environment variables under your control.
-- **Third-party sharing** — None. No data is shared with the authors, Anthropic, or any third party beyond the direct connection to your own firewall.
-- **Contact** — This extension collects and retains no personal data, so there are no data-subject requests to fulfill. For general privacy questions, [open a GitHub issue](https://github.com/james-cgx/panos-mcp/issues) — an informational query only; please don't include any personal data. Security vulnerabilities go through the separate private channel in [SECURITY.md](SECURITY.md). Maintained by James Cadena.
-
-## Disclaimer
-
-This software is provided "as is", without warranty of any kind. This tool connects an AI model to live network infrastructure. AI models can hallucinate, misunderstand context, and execute unintended changes. The authors are not responsible for any damage, data loss, outages, or security incidents caused by the use of this software. You are solely responsible for any actions taken by the AI model through this server.
-
-**Recommendations:**
-- Test in a lab environment before using in production
-- Use a read-only API key for inspection tasks
-- Always review and confirm changes before committing
-- Monitor firewall logs for unexpected configuration changes
-
-## Security
-
-Please report security vulnerabilities privately — **do not** open a public issue. Use [GitHub Private Vulnerability Reporting](https://github.com/james-cgx/panos-mcp/security/advisories/new). See [SECURITY.md](SECURITY.md) for details.
+This server does not collect telemetry or send data to the project authors. API calls go directly from the machine running the MCP server to the configured firewall, Panorama appliance, proxy, or 1Password account when 1Password Environment injection is enabled. Credentials are read from environment variables, 1Password, or local keychain storage depending on configuration.
 
 ## License
 
