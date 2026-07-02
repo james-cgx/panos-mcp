@@ -1,5 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { isCliInjectionMode, maybeRelaunchUnderOpCli } from "../../src/config/onepassword-cli.js";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import {
+  loadOpEnvironmentIdFromRefsFile,
+  isCliInjectionMode,
+  maybeRelaunchUnderOpCli,
+} from "../../src/config/onepassword-cli.js";
 
 const CLI_ENV = { OP_ENVIRONMENT_ID: "env-uuid" };
 
@@ -20,6 +27,76 @@ describe("isCliInjectionMode", () => {
 
   it("is false with no Environment ID", () => {
     expect(isCliInjectionMode({})).toBe(false);
+  });
+});
+
+describe("loadOpEnvironmentIdFromRefsFile", () => {
+  function withTempDir(fn: (dir: string) => void) {
+    const dir = mkdtempSync(join(tmpdir(), "panos-mcp-op-"));
+    try {
+      fn(dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  it("loads OP_ENVIRONMENT_ID from .op/refs.env when it is not already set", () => {
+    withTempDir((dir) => {
+      mkdirSync(join(dir, ".op"));
+      writeFileSync(
+        join(dir, ".op", "refs.env"),
+        "# local 1Password environment\nOP_ENVIRONMENT_ID=\"env-from-file\"\n"
+      );
+      const env: Record<string, string | undefined> = {};
+
+      const result = loadOpEnvironmentIdFromRefsFile({ env, cwd: dir });
+
+      expect(result).toEqual({ loaded: true, path: join(dir, ".op", "refs.env") });
+      expect(env.OP_ENVIRONMENT_ID).toBe("env-from-file");
+    });
+  });
+
+  it("does not override OP_ENVIRONMENT_ID that was already provided", () => {
+    withTempDir((dir) => {
+      mkdirSync(join(dir, ".op"));
+      writeFileSync(join(dir, ".op", "refs.env"), "OP_ENVIRONMENT_ID=env-from-file\n");
+      const env: Record<string, string | undefined> = { OP_ENVIRONMENT_ID: "env-from-env" };
+
+      const result = loadOpEnvironmentIdFromRefsFile({ env, cwd: dir });
+
+      expect(result).toEqual({ loaded: false });
+      expect(env.OP_ENVIRONMENT_ID).toBe("env-from-env");
+    });
+  });
+
+  it("finds repo-local .op/refs.env when launched via dist/index.js from another cwd", () => {
+    withTempDir((repoDir) => {
+      withTempDir((otherDir) => {
+        mkdirSync(join(repoDir, ".op"));
+        writeFileSync(join(repoDir, ".op", "refs.env"), "export OP_ENVIRONMENT_ID=env-from-repo\n");
+        const env: Record<string, string | undefined> = {};
+
+        const result = loadOpEnvironmentIdFromRefsFile({
+          env,
+          cwd: otherDir,
+          entryScript: join(repoDir, "dist", "index.js"),
+        });
+
+        expect(result).toEqual({ loaded: true, path: join(repoDir, ".op", "refs.env") });
+        expect(env.OP_ENVIRONMENT_ID).toBe("env-from-repo");
+      });
+    });
+  });
+
+  it("is a no-op when no refs file exists", () => {
+    withTempDir((dir) => {
+      const env: Record<string, string | undefined> = {};
+
+      const result = loadOpEnvironmentIdFromRefsFile({ env, cwd: dir });
+
+      expect(result).toEqual({ loaded: false });
+      expect(env.OP_ENVIRONMENT_ID).toBeUndefined();
+    });
   });
 });
 

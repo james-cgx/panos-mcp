@@ -78,6 +78,14 @@ For local 1Password CLI injection, install and sign in to the `op` CLI, then pro
 }
 ```
 
+When running from a local checkout, you can put the Environment ID in `.op/refs.env` instead of exporting it in your shell:
+
+```env
+OP_ENVIRONMENT_ID=your-1password-environment-id
+```
+
+`panos-mcp` reads that file at startup and then uses the same `op run --environment` flow. The local `.op/refs.env` file is ignored by git.
+
 The Desktop Extension (`.mcpb`) supports one firewall configured at install time. For multiple firewalls or Panorama instances, use the CLI configuration described in [Configuration](docs/configuration.md).
 
 ## Development
