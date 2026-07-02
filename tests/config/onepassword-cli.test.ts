@@ -98,6 +98,26 @@ describe("loadOpEnvironmentIdFromRefsFile", () => {
       expect(env.OP_ENVIRONMENT_ID).toBeUndefined();
     });
   });
+
+  it("skips unreadable refs candidates and keeps looking", () => {
+    withTempDir((cwdDir) => {
+      withTempDir((repoDir) => {
+        mkdirSync(join(cwdDir, ".op", "refs.env"), { recursive: true });
+        mkdirSync(join(repoDir, ".op"));
+        writeFileSync(join(repoDir, ".op", "refs.env"), "OP_ENVIRONMENT_ID=env-from-repo\n");
+        const env: Record<string, string | undefined> = {};
+
+        const result = loadOpEnvironmentIdFromRefsFile({
+          env,
+          cwd: cwdDir,
+          entryScript: join(repoDir, "dist", "index.js"),
+        });
+
+        expect(result).toEqual({ loaded: true, path: join(repoDir, ".op", "refs.env") });
+        expect(env.OP_ENVIRONMENT_ID).toBe("env-from-repo");
+      });
+    });
+  });
 });
 
 describe("maybeRelaunchUnderOpCli", () => {

@@ -97,7 +97,12 @@ export function loadOpEnvironmentIdFromRefsFile(
   for (const path of candidateRefsEnvPaths(cwd, entryScript)) {
     if (!existsSync(path)) continue;
 
-    const environmentId = parseOpEnvironmentId(readFileSync(path, "utf-8"));
+    let environmentId: string | null;
+    try {
+      environmentId = parseOpEnvironmentId(readFileSync(path, "utf-8"));
+    } catch {
+      continue;
+    }
     if (!environmentId) continue;
 
     env.OP_ENVIRONMENT_ID = environmentId;
