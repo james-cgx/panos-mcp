@@ -1,5 +1,16 @@
 version: 2
 updates:
+  # Keep package.json and pnpm-lock.yaml dependency updates flowing.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      node-dependencies:
+        patterns: ["*"]
+    commit-message:
+      prefix: deps
+
   # Keep the SHA-pinned GitHub Actions in .github/workflows up to date.
   - package-ecosystem: github-actions
     directory: /

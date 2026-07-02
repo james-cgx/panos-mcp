@@ -3,6 +3,10 @@
   "version": "1.3.24",
   "description": "MCP server for Palo Alto Networks PanOS firewalls",
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "main": "dist/index.js",
   "bin": {
     "panos-mcp": "dist/index.js",
@@ -15,8 +19,8 @@
     "keygen": "node dist/cli/keygen.js",
     "test": "vitest run",
     "bundle": "node scripts/bundle.js",
-    "pack:extension": "npm run build && npm run bundle && node scripts/pack-extension.js",
-    "prepare": "npm run build"
+    "pack:extension": "tsc && node scripts/bundle.js && node scripts/pack-extension.js",
+    "prepare": "tsc"
   },
   "keywords": [
     "mcp",

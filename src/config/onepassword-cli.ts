@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
-import { delimiter, join } from "path";
-import { accessSync, constants } from "fs";
+import { delimiter, dirname, join, resolve } from "path";
+import { accessSync, constants, existsSync, readFileSync } from "fs";
 
 type EnvLike = Record<string, string | undefined>;
 
@@ -22,6 +22,16 @@ export interface RelaunchResult {
   exitCode?: number;
 }
 
+export interface LoadOpEnvironmentIdOptions {
+  env?: EnvLike;
+  cwd?: string;
+  entryScript?: string;
+}
+
+export type LoadOpEnvironmentIdResult =
+  | { loaded: true; path: string }
+  | { loaded: false };
+
 /**
  * Local CLI injection mode: an Environment ID is configured, but no service
  * account token, and we are not already running inside the `op run` wrapper.
@@ -31,6 +41,75 @@ export function isCliInjectionMode(env: EnvLike): boolean {
   const token = (env.OP_SERVICE_ACCOUNT_TOKEN ?? "").trim();
   const wrapped = (env[WRAP_SENTINEL] ?? "").trim();
   return Boolean(environmentId) && !token && !wrapped;
+}
+
+function candidateRefsEnvPaths(cwd: string, entryScript?: string): string[] {
+  const roots = [resolve(cwd)];
+
+  if (entryScript) {
+    const scriptPath = resolve(cwd, entryScript);
+    const scriptDir = dirname(scriptPath);
+    roots.push(scriptDir, dirname(scriptDir));
+  }
+
+  return Array.from(new Set(roots)).map((root) => join(root, ".op", "refs.env"));
+}
+
+function unquoteEnvValue(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length >= 2) {
+    const quote = trimmed[0];
+    if ((quote === `"` || quote === `'`) && trimmed[trimmed.length - 1] === quote) {
+      return trimmed.slice(1, -1);
+    }
+  }
+  return trimmed.replace(/\s+#.*$/, "").trim();
+}
+
+function parseOpEnvironmentId(content: string): string | null {
+  for (const rawLine of content.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+    const trimmed = rawLine.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const line = trimmed.startsWith("export ") ? trimmed.slice("export ".length).trimStart() : trimmed;
+    const equals = line.indexOf("=");
+    if (equals <= 0) continue;
+
+    const name = line.slice(0, equals).trim();
+    if (name !== "OP_ENVIRONMENT_ID") continue;
+
+    const value = unquoteEnvValue(line.slice(equals + 1));
+    if (value && !value.startsWith("${")) return value;
+  }
+
+  return null;
+}
+
+export function loadOpEnvironmentIdFromRefsFile(
+  options: LoadOpEnvironmentIdOptions = {}
+): LoadOpEnvironmentIdResult {
+  const env = options.env ?? (process.env as EnvLike);
+  if ((env.OP_ENVIRONMENT_ID ?? "").trim()) return { loaded: false };
+
+  const cwd = options.cwd ?? process.cwd();
+  const entryScript = options.entryScript ?? process.argv[1];
+
+  for (const path of candidateRefsEnvPaths(cwd, entryScript)) {
+    if (!existsSync(path)) continue;
+
+    let environmentId: string | null;
+    try {
+      environmentId = parseOpEnvironmentId(readFileSync(path, "utf-8"));
+    } catch {
+      continue;
+    }
+    if (!environmentId) continue;
+
+    env.OP_ENVIRONMENT_ID = environmentId;
+    return { loaded: true, path };
+  }
+
+  return { loaded: false };
 }
 
 function defaultLookupOp(env: EnvLike): string | null {
