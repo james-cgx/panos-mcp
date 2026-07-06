@@ -26,6 +26,14 @@ PAN-OS MCP is a [Model Context Protocol](https://modelcontextprotocol.io) server
 - A PAN-OS firewall or Panorama appliance with XML API access enabled.
 - A PAN-OS API key.
 
+To generate a PAN-OS API key directly from a firewall, use the XML API keygen endpoint:
+
+```bash
+curl -k -X GET 'https://<FIREWALL_IP_OR_HOST>/api/?type=keygen&user=<USERNAME>&password=<PASSWORD>'
+```
+
+This sends credentials in the request URL and skips TLS certificate verification. Use it only from a trusted management network, and prefer a scoped or read-only API key where possible.
+
 ## Quick Start
 
 For a single firewall, provide credentials directly through environment variables:
