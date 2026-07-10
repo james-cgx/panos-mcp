@@ -55,5 +55,5 @@ See the `README.md` configuration section for public-safe setup details.
 
 - Keep secret values out of docs, tests, fixtures, and examples.
 - Prefer generic placeholder hostnames and variable names.
-- Keep README concise; put detailed public setup docs under `docs/`.
+- Public setup documentation is consolidated in the README configuration section; keep it public-safe and well-organized rather than splitting it back out under `docs/`.
 - Run build, tests, and production audit before calling cleanup complete.

@@ -63,9 +63,10 @@ export function planBootstrap(devices: ManagedDevice[], candidateEnvVars: string
   const proposed: BootstrapPlan["proposed_entries"] = [];
   const unmatchedDevices: BootstrapPlan["unmatched_devices"] = [];
   for (const device of devices) {
-    const envVar = varsByNormalizedName.get(normalizeForMatch(device.hostname));
+    const normalizedHostname = normalizeForMatch(device.hostname);
+    const envVar = varsByNormalizedName.get(normalizedHostname);
     if (envVar) {
-      varsByNormalizedName.delete(normalizeForMatch(device.hostname));
+      varsByNormalizedName.delete(normalizedHostname);
       proposed.push({
         name: device.hostname,
         host: device.host || device.hostname,

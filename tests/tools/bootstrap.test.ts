@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from "fs";
 import { resolve } from "path";
 
@@ -43,6 +43,8 @@ const tmpConfig = resolve("bootstrap.tools.test.tmp.json");
 function cleanup() {
   try { unlinkSync(tmpConfig); } catch {}
 }
+
+afterAll(cleanup);
 
 describe("normalizeForMatch", () => {
   it("uppercases and replaces hyphens with underscores", () => {

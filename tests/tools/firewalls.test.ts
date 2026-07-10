@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import { writeFileSync, unlinkSync } from "fs";
 import { resolve } from "path";
 
@@ -23,6 +23,8 @@ const tmpConfig = resolve("firewalls.tools.test.tmp.json");
 function cleanup() {
   try { unlinkSync(tmpConfig); } catch {}
 }
+
+afterAll(cleanup);
 
 type ToolHandler = () => Promise<{ content: Array<{ type: "text"; text: string }> }>;
 

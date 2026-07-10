@@ -86,13 +86,21 @@ PAN-OS MCP can run with a single firewall from environment variables, with 1Pass
 
 ### API Keys
 
-To generate a PAN-OS API key directly from a firewall, use the XML API keygen endpoint:
+Use a scoped or read-only PAN-OS admin role for API keys wherever possible, and set `PANOS_VERIFY_SSL=true` whenever the firewall presents a certificate your system trusts.
+
+To generate an API key, use the XML API keygen endpoint over verified TLS. If the firewall's certificate is not in your system trust store, pass its CA bundle explicitly rather than disabling verification:
+
+```bash
+curl --cacert <CA_BUNDLE_FILE> -X GET 'https://<FIREWALL_IP_OR_HOST>/api/?type=keygen&user=<USERNAME>&password=<PASSWORD>'
+```
+
+Note that the keygen endpoint itself places credentials in the request URL, which can end up in shell history and proxy logs. For interactive use, prefer `panos-keygen` (see [Multi-Firewall Mode](#multi-firewall-mode)), which prompts for the password instead of taking it on the command line.
+
+Insecure fallback: `curl -k` skips certificate verification entirely. Use it only from a trusted management network against a lab or freshly deployed firewall that does not yet have a proper certificate, and prefer rotating any key generated this way once verified TLS is in place:
 
 ```bash
 curl -k -X GET 'https://<FIREWALL_IP_OR_HOST>/api/?type=keygen&user=<USERNAME>&password=<PASSWORD>'
 ```
-
-This sends credentials in the request URL and skips TLS certificate verification. Use it only from a trusted management network, and prefer a scoped or read-only API key where possible.
 
 ### Environment Variables
 
@@ -100,7 +108,7 @@ This sends credentials in the request URL and skips TLS certificate verification
 | --- | --- |
 | `PANOS_HOST` | Firewall or Panorama hostname or IP address. |
 | `PANOS_API_KEY` | PAN-OS XML API key. |
-| `PANOS_VERIFY_SSL` | Optional. Set to `true`, `1`, `yes`, or `on` to verify the PAN-OS TLS certificate. Defaults to disabled. |
+| `PANOS_VERIFY_SSL` | Optional. Set to `true`, `1`, `yes`, or `on` to verify the PAN-OS TLS certificate. Defaults to disabled — enable it whenever the firewall has a trusted certificate. |
 | `PANOS_FIREWALLS_CONFIG` | Optional path to a multi-firewall JSON config file. Defaults to `~/.config/panos-mcp/firewalls.json`. |
 | `OP_ENVIRONMENT_ID` | 1Password Environment ID. |
 | `OP_SERVICE_ACCOUNT_TOKEN` | 1Password service account token for server-side Environment loading. |

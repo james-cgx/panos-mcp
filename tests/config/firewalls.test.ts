@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
 import { resolve } from "path";
 
@@ -34,6 +34,8 @@ function writeConfig(data: unknown) {
 function cleanup() {
   try { unlinkSync(tmpConfig); } catch {}
 }
+
+afterAll(cleanup);
 
 describe("firewalls config", () => {
   let keychainStore: Map<string, string>;
