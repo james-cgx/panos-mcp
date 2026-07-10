@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { readFileSync, writeFileSync, unlinkSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
 import { resolve } from "path";
 
 vi.mock("../../src/config/keychain.js", () => ({
@@ -19,6 +19,10 @@ import {
   getExpectedEnvironmentVariableNames,
   saveFirewallEntry,
   setInjectedEnvironment,
+  recordInjectedEnvironmentNames,
+  getUnreferencedInjectedNames,
+  describeUnconfiguredState,
+  mergeEnvKeyedFirewallEntries,
 } from "../../src/config/firewalls.js";
 
 const tmpConfig = resolve("firewalls.test.tmp.json");
@@ -217,6 +221,198 @@ describe("firewalls config", () => {
     });
   });
 
+
+  describe("injected environment name tracking", () => {
+    beforeEach(() => {
+      process.env.PANOS_FIREWALLS_CONFIG = tmpConfig;
+    });
+
+    it("treats setInjectedEnvironment keys and recorded names as injected", async () => {
+      await loadFirewallConfig();
+      setInjectedEnvironment(new Map([["HQ_FW1", "key-1"]]));
+      recordInjectedEnvironmentNames(["BR_FW2"]);
+
+      expect(getUnreferencedInjectedNames()).toEqual(["BR_FW2", "HQ_FW1"]);
+    });
+
+    it("excludes built-in PANOS_* and well-known 1Password names, but not OP_-prefixed device keys", async () => {
+      await loadFirewallConfig();
+      setInjectedEnvironment(new Map([["PANOS_HOST", "fw.example.com"], ["PANOS_API_KEY", "k"]]));
+      recordInjectedEnvironmentNames([
+        "PANOS_VERIFY_SSL",
+        "OP_SERVICE_ACCOUNT_TOKEN",
+        "OP_ENVIRONMENT_ID",
+        "OP_FW1",
+        "HQ_FW1",
+      ]);
+
+      expect(getUnreferencedInjectedNames()).toEqual(["HQ_FW1", "OP_FW1"]);
+    });
+
+    it("folds names case-insensitively on Windows so referenced variables are not re-offered", async () => {
+      writeConfig({
+        firewalls: [{ name: "branch", host: "10.0.5.5", api_key_env: "hq_fw1" }],
+      });
+      setInjectedEnvironment(new Map());
+      recordInjectedEnvironmentNames(["HQ_FW1"]);
+      await loadFirewallConfig();
+
+      expect(getUnreferencedInjectedNames("win32")).toEqual([]);
+      expect(getUnreferencedInjectedNames("linux")).toEqual(["HQ_FW1"]);
+    });
+
+    it("excludes names referenced by api_key_env entries in the loaded config", async () => {
+      writeConfig({
+        firewalls: [{ name: "panorama", host: "panorama.example.com", api_key_env: "PANORAMA_KEY" }],
+      });
+      setInjectedEnvironment(new Map([["PANORAMA_KEY", "p-key"]]));
+      recordInjectedEnvironmentNames(["HQ_FW1"]);
+
+      await loadFirewallConfig();
+
+      expect(getUnreferencedInjectedNames()).toEqual(["HQ_FW1"]);
+    });
+
+    it("setInjectedEnvironment resets previously recorded names", () => {
+      recordInjectedEnvironmentNames(["STALE_NAME"]);
+      setInjectedEnvironment(new Map());
+
+      expect(getUnreferencedInjectedNames()).toEqual([]);
+    });
+  });
+
+  describe("describeUnconfiguredState", () => {
+    beforeEach(() => {
+      process.env.PANOS_FIREWALLS_CONFIG = tmpConfig;
+    });
+
+    it("reports the config path, a missing file, and bootstrap guidance", async () => {
+      await loadFirewallConfig();
+      recordInjectedEnvironmentNames(["HQ_FW1", "PANORAMA_KEY"]);
+
+      const state = describeUnconfiguredState();
+
+      expect(state.config_path).toBe(tmpConfig);
+      expect(state.config_file_exists).toBe(false);
+      expect(state.injected_unreferenced_env_var_names).toEqual(["HQ_FW1", "PANORAMA_KEY"]);
+      expect(state.config_example).toEqual({
+        firewalls: [{ name: "HQ-FW1", host: "hq-fw1.example.com", api_key_env: "HQ_FW1" }],
+      });
+      expect(state.next_steps).toContain("bootstrap_firewalls_from_panorama");
+      expect(state.next_steps).toContain("PANOS_HOST");
+    });
+
+    it("reports config_file_exists=true when the file is present", async () => {
+      writeConfig({ firewalls: [{ name: "fw1", host: "10.0.1.1", api_key_env: "MISSING_KEY" }] });
+      await loadFirewallConfig();
+
+      expect(describeUnconfiguredState().config_file_exists).toBe(true);
+    });
+
+    it("never exposes injected values", () => {
+      setInjectedEnvironment(new Map([["HQ_FW1", "super-secret-value"]]));
+
+      expect(JSON.stringify(describeUnconfiguredState())).not.toContain("super-secret-value");
+    });
+  });
+
+  describe("mergeEnvKeyedFirewallEntries", () => {
+    beforeEach(() => {
+      process.env.PANOS_FIREWALLS_CONFIG = tmpConfig;
+    });
+
+    it("creates the config file when it does not exist", () => {
+      const result = mergeEnvKeyedFirewallEntries([
+        { name: "HQ-FW1", host: "10.0.0.1", api_key_env: "HQ_FW1" },
+      ]);
+
+      expect(result).toEqual({ added: ["HQ-FW1"], skipped_existing: [], rejected: [] });
+      const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
+      expect(data.firewalls).toEqual([
+        { name: "HQ-FW1", host: "10.0.0.1", api_key_env: "HQ_FW1" },
+      ]);
+    });
+
+    it("preserves existing entries and skips name collisions", () => {
+      writeConfig({
+        firewalls: [
+          { name: "panorama", host: "panorama.example.com", api_key_env: "PANORAMA_KEY", verify_ssl: true },
+        ],
+      });
+
+      const result = mergeEnvKeyedFirewallEntries([
+        { name: "panorama", host: "other.example.com", api_key_env: "OTHER_KEY" },
+        { name: "HQ-FW1", host: "https://10.0.0.1/", api_key_env: "HQ_FW1" },
+      ]);
+
+      expect(result).toEqual({ added: ["HQ-FW1"], skipped_existing: ["panorama"], rejected: [] });
+      const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
+      expect(data.firewalls).toEqual([
+        { name: "panorama", host: "panorama.example.com", api_key_env: "PANORAMA_KEY", verify_ssl: true },
+        { name: "HQ-FW1", host: "10.0.0.1", api_key_env: "HQ_FW1" },
+      ]);
+    });
+
+    it("does not rewrite the file when nothing was added", () => {
+      writeConfig({ firewalls: [{ name: "fw1", host: "10.0.1.1" }] });
+      const before = readFileSync(tmpConfig, "utf-8");
+
+      const result = mergeEnvKeyedFirewallEntries([
+        { name: "fw1", host: "10.9.9.9", api_key_env: "FW1_KEY" },
+      ]);
+
+      expect(result).toEqual({ added: [], skipped_existing: ["fw1"], rejected: [] });
+      expect(readFileSync(tmpConfig, "utf-8")).toBe(before);
+    });
+
+    it("refuses to overwrite a file without a firewalls array", () => {
+      writeFileSync(tmpConfig, JSON.stringify({ something: "else" }));
+
+      expect(() =>
+        mergeEnvKeyedFirewallEntries([{ name: "fw1", host: "10.0.1.1", api_key_env: "FW1_KEY" }])
+      ).toThrow(/refusing to overwrite/);
+    });
+
+    it("rejects schema-invalid entries instead of writing a config that would fail to load", () => {
+      const longName = "X".repeat(64);
+
+      const result = mergeEnvKeyedFirewallEntries([
+        { name: longName, host: "10.0.0.1", api_key_env: "LONG_KEY" },
+        { name: "ok-fw", host: "10.0.0.2", api_key_env: "OK_KEY" },
+      ]);
+
+      expect(result.added).toEqual(["ok-fw"]);
+      expect(result.rejected).toHaveLength(1);
+      expect(result.rejected[0].name).toBe(longName);
+      const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
+      expect(data.firewalls).toEqual([{ name: "ok-fw", host: "10.0.0.2", api_key_env: "OK_KEY" }]);
+    });
+
+    it("rejects entries whose host sanitizes to empty", () => {
+      const result = mergeEnvKeyedFirewallEntries([
+        { name: "fw1", host: "https://", api_key_env: "FW1_KEY" },
+      ]);
+
+      expect(result.added).toEqual([]);
+      expect(result.rejected[0].name).toBe("fw1");
+      expect(existsSync(tmpConfig)).toBe(false);
+    });
+
+    it("refuses a corrupt config file without echoing its contents", () => {
+      writeFileSync(tmpConfig, '{"firewalls": [{"api_key": LUFRPT1FAKEVALUE}]}');
+
+      let message = "";
+      try {
+        mergeEnvKeyedFirewallEntries([{ name: "fw1", host: "10.0.1.1", api_key_env: "FW1_KEY" }]);
+      } catch (err) {
+        message = err instanceof Error ? err.message : String(err);
+      }
+
+      expect(message).toContain("not valid JSON");
+      expect(message).toContain(tmpConfig);
+      expect(message).not.toContain("LUFRPT");
+    });
+  });
 
   describe("migration — plaintext api_key in JSON", () => {
     beforeEach(() => {

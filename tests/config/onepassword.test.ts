@@ -115,6 +115,32 @@ describe("onepassword environment loader", () => {
     expect(variables).toEqual(new Map([["PANOS_API_KEY", "secret-key"]]));
   });
 
+  it("reports the names of variables dropped by the filter, never their values", async () => {
+    const getVariables = vi.fn().mockResolvedValue({
+      variables: [
+        { name: "PANOS_API_KEY", value: "secret-key", masked: true },
+        { name: "HQ_FW1", value: "unreferenced-key-1", masked: true },
+        { name: "BR_FW2", value: "unreferenced-key-2", masked: true },
+      ],
+    });
+    const createClient = vi.fn().mockResolvedValue({ environments: { getVariables } });
+    const skipped: string[] = [];
+
+    const variables = await loadOnePasswordEnvironment({
+      env: {
+        OP_ENVIRONMENT_ID: "env-id",
+        OP_SERVICE_ACCOUNT_TOKEN: "ops_secret_token",
+      },
+      allowedNames: new Set(["PANOS_API_KEY"]),
+      onSkippedName: (name) => skipped.push(name),
+      createClientImpl: createClient as any,
+    });
+
+    expect(variables).toEqual(new Map([["PANOS_API_KEY", "secret-key"]]));
+    expect(skipped).toEqual(["HQ_FW1", "BR_FW2"]);
+    expect(JSON.stringify(skipped)).not.toContain("unreferenced-key");
+  });
+
 
   it("normalizes and redacts errors when the SDK fails to load", async () => {
     const loadSdk = vi.fn().mockRejectedValue(new Error("cannot load module ops_secret_token"));

@@ -3,16 +3,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
-  getExpectedEnvironmentVariableNames,
+  describeUnconfiguredState,
+  getFirewallEntries,
   loadFirewallConfig,
-  setInjectedEnvironment,
+  resolveFirewall,
 } from "./config/firewalls.js";
 import { isKeychainAvailable } from "./config/keychain.js";
-import { loadOnePasswordEnvironment } from "./config/onepassword.js";
+import { loadInjectedEnvironment } from "./config/environment.js";
 import { loadOpEnvironmentIdFromRefsFile, maybeRelaunchUnderOpCli } from "./config/onepassword-cli.js";
 import { describeProxy } from "./api/proxy.js";
 
 import { registerFirewallTools } from "./tools/firewalls.js";
+import { registerBootstrapTools } from "./tools/bootstrap.js";
 import { registerSystemTools } from "./tools/system.js";
 import { registerNetworkTools } from "./tools/network.js";
 import { registerSecurityTools } from "./tools/security.js";
@@ -53,6 +55,7 @@ const _tool = server.tool.bind(server);
 
 // Register all tools
 registerFirewallTools(server);
+registerBootstrapTools(server);
 registerSystemTools(server);
 registerNetworkTools(server);
 registerSecurityTools(server);
@@ -80,17 +83,29 @@ async function main() {
     process.exit(relaunch.exitCode ?? 0);
   }
 
-  const onePasswordEnvironment = await loadOnePasswordEnvironment({
-    allowedNames: getExpectedEnvironmentVariableNames(),
-  });
-  setInjectedEnvironment(onePasswordEnvironment);
-  if (onePasswordEnvironment.size > 0) {
+  const injectedCount = await loadInjectedEnvironment();
+  if (injectedCount > 0) {
     process.stderr.write(
-      `[panos-mcp] Loaded ${onePasswordEnvironment.size} environment variable(s) from 1Password Environment\n`
+      `[panos-mcp] Loaded ${injectedCount} environment variable(s) from 1Password Environment\n`
     );
   }
 
   await loadFirewallConfig();
+  if (getFirewallEntries().length === 0 && !resolveFirewall()) {
+    const state = describeUnconfiguredState();
+    process.stderr.write(
+      "[panos-mcp] WARNING: No firewall targets are configured — every firewall tool call will fail.\n" +
+        `[panos-mcp]   Config file: ${state.config_path} (${state.config_file_exists ? "exists" : "not found"})\n` +
+        (state.injected_unreferenced_env_var_names.length > 0
+          ? `[panos-mcp]   Injected but unreferenced environment variables: ${state.injected_unreferenced_env_var_names.join(", ")}\n`
+          : "") +
+        "[panos-mcp]   Configure a target one of three ways:\n" +
+        "[panos-mcp]     1. Set PANOS_HOST and PANOS_API_KEY (directly or in the 1Password Environment).\n" +
+        `[panos-mcp]     2. Create ${state.config_path} with entries whose api_key_env references injected variable names.\n` +
+        `[panos-mcp]        File shape: ${JSON.stringify(state.config_example)}\n` +
+        "[panos-mcp]     3. Panorama-managed fleet: add a single Panorama entry, then run the bootstrap_firewalls_from_panorama tool.\n"
+    );
+  }
   if (!isKeychainAvailable()) {
     process.stderr.write(
       "[panos-mcp] WARNING: System keychain unavailable — API keys are stored in plaintext. " +

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "panos-mcp",
   "version": "1.3.24",
-  "description": "Control Palo Alto Networks PA-Series firewalls and Panorama with AI. 117 tools across 16 modules: security policies, NAT, objects, VPN, logs, WildFire, GlobalProtect, decryption, and more. Supports staged commits and read-only inspection. For multi-firewall setups use the CLI mode — see github.com/james-cgx/panos-mcp.",
+  "description": "Control Palo Alto Networks PA-Series firewalls and Panorama with AI. 118 tools across 17 modules: security policies, NAT, objects, VPN, logs, WildFire, GlobalProtect, decryption, and more. Supports staged commits and read-only inspection. For multi-firewall setups use the CLI mode — see github.com/james-cgx/panos-mcp.",
   "author": { "name": "James Cadena", "url": "https://github.com/james-cgx" },
   "homepage": "https://github.com/james-cgx/panos-mcp",
   "repository": { "type": "git", "url": "https://github.com/james-cgx/panos-mcp" },
@@ -139,7 +139,8 @@
     { "name": "panorama_push_to_devices", "description": "Pushes configuration from Panorama to managed devices" },
     { "name": "run_op_command", "description": "Executes an arbitrary PanOS operational XML command" },
     { "name": "get_config_xpath", "description": "Retrieves configuration at a specific XPath location" },
-    { "name": "list_firewalls", "description": "Lists all configured firewall targets" }
+    { "name": "list_firewalls", "description": "Lists all configured firewall targets" },
+    { "name": "bootstrap_firewalls_from_panorama", "description": "Builds multi-firewall config entries by matching Panorama-managed device hostnames to injected 1Password variable names" }
   ],
   "user_config": {
     "host": {

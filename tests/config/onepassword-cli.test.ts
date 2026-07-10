@@ -6,6 +6,7 @@ import {
   loadOpEnvironmentIdFromRefsFile,
   isCliInjectionMode,
   maybeRelaunchUnderOpCli,
+  getOpCliInjectedNames,
 } from "../../src/config/onepassword-cli.js";
 
 const CLI_ENV = { OP_ENVIRONMENT_ID: "env-uuid" };
@@ -170,6 +171,61 @@ describe("maybeRelaunchUnderOpCli", () => {
       "--flag",
     ]);
     expect(childEnv.PANOS_OP_WRAPPED).toBe("1");
+  });
+
+  it("passes the parent's env var names as a baseline to the wrapped child", async () => {
+    const spawnImpl = vi.fn().mockResolvedValue(0);
+
+    await maybeRelaunchUnderOpCli({
+      env: { OP_ENVIRONMENT_ID: "env-uuid", PATH: "/usr/bin", HOME: "/home/me" },
+      lookupOpImpl: () => "/usr/bin/op",
+      spawnImpl: spawnImpl as any,
+      execPath: "/usr/bin/node",
+      entryScript: "/app/dist/index.js",
+      argv: ["/usr/bin/node", "/app/dist/index.js"],
+    });
+
+    const [, , childEnv] = spawnImpl.mock.calls[0];
+    const baseline = childEnv.PANOS_PRE_OP_ENV_NAMES.split("\n");
+    expect(baseline).toEqual(
+      expect.arrayContaining([
+        "OP_ENVIRONMENT_ID",
+        "PATH",
+        "HOME",
+        "PANOS_OP_WRAPPED",
+        "PANOS_PRE_OP_ENV_NAMES",
+      ])
+    );
+    // Names only — the baseline must not carry values.
+    expect(childEnv.PANOS_PRE_OP_ENV_NAMES).not.toContain("/usr/bin");
+  });
+});
+
+describe("getOpCliInjectedNames", () => {
+  const wrappedEnv = {
+    PANOS_OP_WRAPPED: "1",
+    PANOS_PRE_OP_ENV_NAMES:
+      "PATH\nOP_ENVIRONMENT_ID\nPANOS_OP_WRAPPED\nPANOS_PRE_OP_ENV_NAMES",
+    PATH: "/usr/bin",
+    OP_ENVIRONMENT_ID: "env-uuid",
+  };
+
+  it("recovers exactly the variables injected after the baseline, sorted", () => {
+    expect(
+      getOpCliInjectedNames({ ...wrappedEnv, HQ_FW1: "injected-1", BR_FW2: "injected-2" })
+    ).toEqual(["BR_FW2", "HQ_FW1"]);
+  });
+
+  it("returns an empty list when op run injected nothing new", () => {
+    expect(getOpCliInjectedNames(wrappedEnv)).toEqual([]);
+  });
+
+  it("returns null outside the op run wrapper", () => {
+    expect(getOpCliInjectedNames({ PATH: "/usr/bin", HQ_FW1: "key" })).toBeNull();
+  });
+
+  it("returns null when wrapped without a baseline (older parent)", () => {
+    expect(getOpCliInjectedNames({ PANOS_OP_WRAPPED: "1", HQ_FW1: "key" })).toBeNull();
   });
 
   it("propagates the wrapped child's exit code", async () => {
