@@ -30,6 +30,7 @@ The repo is pinned to `pnpm@11.9.0` through `packageManager`. Do not add `packag
 - `src/config/firewalls.ts` loads single-firewall and multi-firewall configuration, supports 1Password-injected environment values, migrates plaintext keys to the OS keychain, and resolves target firewalls for tools.
 - `src/config/onepassword.ts` loads selected 1Password Environment variables through the 1Password SDK.
 - `src/config/onepassword-cli.ts` relaunches under `op run --environment` for local CLI injection mode.
+- `src/config/environment.ts` orchestrates injected-credential loading and tracks injected variable names (never values) for both 1Password modes.
 - `src/config/keychain.ts` wraps OS keychain access through `@napi-rs/keyring`.
 - `src/tools/` contains MCP tool registrations grouped by PAN-OS domain.
 - `src/schemas/panos.ts` contains reusable Zod schemas for tool inputs.
@@ -46,11 +47,13 @@ Supported credential/configuration paths:
 - Multi-firewall config: `~/.config/panos-mcp/firewalls.json` or `PANOS_FIREWALLS_CONFIG`.
 - Proxy support: `PANOS_PROXY`, standard proxy variables, and `NO_PROXY`.
 
-See `docs/configuration.md` for public-safe setup details.
+When zero targets are configured, startup emits a stderr diagnostic and `list_firewalls` returns an `unconfigured` state with the config path and injected-but-unreferenced variable names. For Panorama-managed fleets, `bootstrap_firewalls_from_panorama` builds `firewalls.json` from the device inventory.
+
+See the `README.md` configuration section for public-safe setup details.
 
 ## Maintenance Notes
 
 - Keep secret values out of docs, tests, fixtures, and examples.
 - Prefer generic placeholder hostnames and variable names.
-- Keep README concise; put detailed public setup docs under `docs/`.
+- Public setup documentation is consolidated in the README configuration section; keep it public-safe and well-organized rather than splitting it back out under `docs/`.
 - Run build, tests, and production audit before calling cleanup complete.

@@ -7,3 +7,4 @@ extension/
 firewalls.json
 .op/refs.env
 *.test.tmp.json
+docs/security-review.md

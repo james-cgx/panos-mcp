@@ -6,6 +6,9 @@ import { buildDispatcher, describeProxy } from "./proxy.js";
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
+  // Keep hostnames/serials like "0450" or "1e3" as strings instead of
+  // coercing them to numbers (which would drop leading zeros).
+  numberParseOptions: { hex: false, leadingZeros: false, eNotation: false },
 });
 
 export interface ApiResponse {

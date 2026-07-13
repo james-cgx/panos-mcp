@@ -27,6 +27,8 @@ export interface LoadOnePasswordEnvironmentOptions {
   createClientImpl?: CreateClient;
   loadSdkImpl?: LoadSdk;
   allowedNames?: ReadonlySet<string>;
+  /** Called with the NAME of each variable dropped by the allowedNames filter. Values are never exposed. */
+  onSkippedName?: (name: string) => void;
 }
 
 function readEnv(env: EnvLike, name: string): string {
@@ -79,7 +81,10 @@ export async function loadOnePasswordEnvironment(
     const variables = new Map<string, string>();
 
     for (const variable of response.variables ?? []) {
-      if (options.allowedNames && !options.allowedNames.has(variable.name)) continue;
+      if (options.allowedNames && !options.allowedNames.has(variable.name)) {
+        if (variable.name) options.onSkippedName?.(variable.name);
+        continue;
+      }
       if (variable.name) variables.set(variable.name, variable.value ?? "");
     }
 

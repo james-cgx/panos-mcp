@@ -6,6 +6,12 @@ type EnvLike = Record<string, string | undefined>;
 
 const WRAP_SENTINEL = "PANOS_OP_WRAPPED";
 
+// Newline-delimited list of the parent's environment variable NAMES, captured
+// just before re-exec under `op run`. The wrapped child diffs its own env keys
+// against this baseline to learn which variables `op run` injected. Names only
+// — no values cross the boundary beyond what `op run` itself provisions.
+const BASELINE_NAMES_VAR = "PANOS_PRE_OP_ENV_NAMES";
+
 export interface MaybeRelaunchOptions {
   env?: EnvLike;
   /** Resolve the `op` binary path, or null if not found. Injected for tests. */
@@ -193,7 +199,28 @@ export async function maybeRelaunchUnderOpCli(
     ...passthroughArgs,
   ];
 
+  const baselineNames = [...Object.keys(env), WRAP_SENTINEL, BASELINE_NAMES_VAR].join("\n");
   const spawnChild = options.spawnImpl ?? defaultSpawn;
-  const exitCode = await spawnChild(opPath, args, { ...env, [WRAP_SENTINEL]: "1" });
+  const exitCode = await spawnChild(opPath, args, {
+    ...env,
+    [WRAP_SENTINEL]: "1",
+    [BASELINE_NAMES_VAR]: baselineNames,
+  });
   return { relaunched: true, exitCode };
+}
+
+/**
+ * In the `op run` wrapped child, returns the names of environment variables
+ * injected by the 1Password CLI (present now but absent from the pre-exec
+ * baseline). Returns null outside the wrapper or when no baseline was passed.
+ */
+export function getOpCliInjectedNames(env: EnvLike = process.env as EnvLike): string[] | null {
+  if (!(env[WRAP_SENTINEL] ?? "").trim()) return null;
+  const baselineRaw = env[BASELINE_NAMES_VAR];
+  if (baselineRaw === undefined) return null;
+
+  const baseline = new Set(baselineRaw.split("\n").filter(Boolean));
+  return Object.keys(env)
+    .filter((name) => !baseline.has(name))
+    .sort();
 }
