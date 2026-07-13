@@ -37,13 +37,13 @@
     "@napi-rs/keyring": "^1.2.0",
     "fast-xml-parser": "^5.9.3",
     "socks": "^2.8.3",
-    "undici": "^8.6.0",
+    "undici": "^8.7.0",
     "zod": "^4.0"
   },
   "devDependencies": {
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "esbuild": "^0.28",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   }
 }
