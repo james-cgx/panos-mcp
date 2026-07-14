@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/james-cgx/panos-mcp)](https://github.com/james-cgx/panos-mcp/stargazers)
-[![Tests](https://img.shields.io/badge/tests-185%20passing-brightgreen)](https://github.com/james-cgx/panos-mcp/actions)
+[![Tests](https://img.shields.io/badge/tests-186%20passing-brightgreen)](https://github.com/james-cgx/panos-mcp/actions)
 
 PAN-OS MCP is a [Model Context Protocol](https://modelcontextprotocol.io) server for Palo Alto Networks PAN-OS firewalls and Panorama. It lets MCP-capable assistants inspect firewall state, read logs, manage objects and policies, and commit configuration through the PAN-OS XML API.
 
@@ -45,7 +45,7 @@ For a single firewall, provide credentials directly through environment variable
 }
 ```
 
-For 1Password Environment injection, create an Environment containing `PANOS_HOST` and `PANOS_API_KEY`, then provide the Environment ID and service account token:
+For 1Password Environment injection, keep only the secret in 1Password: create an Environment containing `PANOS_API_KEY`, then provide the non-secret host directly alongside the Environment ID and service account token:
 
 ```json
 {
@@ -54,6 +54,7 @@ For 1Password Environment injection, create an Environment containing `PANOS_HOS
       "command": "pnpm",
       "args": ["dlx", "github:james-cgx/panos-mcp"],
       "env": {
+        "PANOS_HOST": "fw.example.com",
         "OP_ENVIRONMENT_ID": "your-1password-environment-id",
         "OP_SERVICE_ACCOUNT_TOKEN": "your-1password-service-account-token"
       }
@@ -62,7 +63,7 @@ For 1Password Environment injection, create an Environment containing `PANOS_HOS
 }
 ```
 
-For local 1Password CLI injection, install and sign in to the `op` CLI, then provide only the Environment ID. The server will relaunch itself under `op run --environment` so the local 1Password session injects `PANOS_HOST` and `PANOS_API_KEY`:
+For local 1Password CLI injection, install and sign in to the `op` CLI, then provide the host and the Environment ID. The server will relaunch itself under `op run --environment` so the local 1Password session injects `PANOS_API_KEY`:
 
 ```json
 {
@@ -71,6 +72,7 @@ For local 1Password CLI injection, install and sign in to the `op` CLI, then pro
       "command": "pnpm",
       "args": ["dlx", "github:james-cgx/panos-mcp"],
       "env": {
+        "PANOS_HOST": "fw.example.com",
         "OP_ENVIRONMENT_ID": "your-1password-environment-id"
       }
     }
@@ -118,19 +120,23 @@ When no `firewalls.json` entries are loaded, the server falls back to `PANOS_HOS
 
 ### 1Password Service Account Mode
 
-Create a 1Password Environment containing:
+Reserve the 1Password Environment for secrets — API keys. Non-secret values like hostnames and IPs belong in plain environment variables (single-firewall mode) or `firewalls.json` (multi-firewall mode).
+
+Create a 1Password Environment containing the API key:
 
 ```text
-PANOS_HOST=fw.example.com
 PANOS_API_KEY=your-api-key
 ```
 
-Start the server with:
+Start the server with the host and the 1Password credentials:
 
 ```text
+PANOS_HOST=fw.example.com
 OP_ENVIRONMENT_ID=your-1password-environment-id
 OP_SERVICE_ACCOUNT_TOKEN=your-1password-service-account-token
 ```
+
+If you prefer to keep everything in 1Password, `PANOS_HOST` and `PANOS_VERIFY_SSL` are also honored from the Environment, but they are not required to live there.
 
 The server only keeps expected PAN-OS variables in memory: `PANOS_HOST`, `PANOS_API_KEY`, `PANOS_VERIFY_SSL`, and any variable names referenced by `api_key_env` entries in `firewalls.json`.
 
@@ -193,7 +199,7 @@ When more than one firewall is configured, tools accept a `firewall` parameter. 
 
 ### Bootstrapping Multi-Firewall Mode from Panorama
 
-If your firewalls are Panorama-managed and a 1Password Environment already holds one API key per firewall — each variable named after the device hostname with non-alphanumerics replaced by underscores (device `HQ-FW1`, variable `HQ_FW1`) — the `bootstrap_firewalls_from_panorama` tool can populate `firewalls.json` for you:
+If your firewalls are Panorama-managed and a 1Password Environment already holds one API key per firewall — each variable named after the device hostname with non-alphanumerics replaced by underscores (device `HQ-FW1`, variable `HQ_FW1`) — the `bootstrap_firewalls_from_panorama` tool can populate `firewalls.json` for you. The hostname is only used as the variable *name*; device hostnames and IPs never need to be stored in the Environment, since they come from Panorama's device inventory:
 
 1. Create a one-entry `firewalls.json` for Panorama (only its address needs to be known up front):
 
