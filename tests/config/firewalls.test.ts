@@ -70,6 +70,18 @@ describe("firewalls config", () => {
       expect(resolveFirewall()).toEqual({ name: "env", host: "10.0.0.1", api_key: "key123", verify_ssl: false });
     });
 
+    it("resolves with a plain-env host and a 1Password-injected key (keys-only Environment)", () => {
+      process.env.PANOS_HOST = "fw.example.com";
+      setInjectedEnvironment(new Map([["PANOS_API_KEY", "op-key"]]));
+
+      expect(resolveFirewall()).toEqual({
+        name: "env",
+        host: "fw.example.com",
+        api_key: "op-key",
+        verify_ssl: false,
+      });
+    });
+
     it("prefers injected 1Password values over process env values", () => {
       process.env.PANOS_HOST = "plain-fw.example.com";
       process.env.PANOS_API_KEY = "plain-key";

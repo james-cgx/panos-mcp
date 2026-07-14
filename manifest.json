@@ -146,20 +146,20 @@
     "host": {
       "type": "string",
       "title": "Firewall Host",
-      "description": "PanOS firewall or Panorama hostname or IP address. Provide with API Key, or leave blank when using a complete 1Password pair.",
+      "description": "PanOS firewall or Panorama hostname or IP address. Not a secret — set it here even when the API key comes from 1Password.",
       "required": false
     },
     "api_key": {
       "type": "string",
       "title": "API Key",
-      "description": "PanOS API key. Provide with Firewall Host, or leave blank when using a complete 1Password pair.",
+      "description": "PanOS API key. Provide with Firewall Host, or leave blank when a 1Password Environment supplies PANOS_API_KEY.",
       "sensitive": true,
       "required": false
     },
     "op_environment_id": {
       "type": "string",
       "title": "1Password Environment ID",
-      "description": "1Password Environment containing PANOS_HOST and PANOS_API_KEY. Provide with a service account token.",
+      "description": "1Password Environment containing PANOS_API_KEY (PANOS_HOST may optionally live there too). Provide with a service account token.",
       "required": false
     },
     "op_service_account_token": {
