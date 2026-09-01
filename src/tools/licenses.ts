@@ -11,7 +11,7 @@ export function registerLicensesTools(server: McpServer) {
     },
     { title: "Get Licenses", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<request><license><info></info></license></request>", target);
       return formatResponse(result);
@@ -26,7 +26,7 @@ export function registerLicensesTools(server: McpServer) {
     },
     { title: "Get License Usage", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><system><info></info></system></show>", target);
       if (result.success && result.data?.system) {

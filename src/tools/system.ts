@@ -11,7 +11,7 @@ export function registerSystemTools(server: McpServer) {
     },
     { title: "Get Firewall Info", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><system><info></info></system></show>", target);
       if (result.success && result.data?.system) {
@@ -29,7 +29,7 @@ export function registerSystemTools(server: McpServer) {
     },
     { title: "Get HA Status", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><high-availability><state></state></high-availability></show>", target);
       return formatResponse(result);
@@ -44,7 +44,7 @@ export function registerSystemTools(server: McpServer) {
     },
     { title: "Get Active Sessions", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><session><info></info></session></show>", target);
       return formatResponse(result);
@@ -59,7 +59,7 @@ export function registerSystemTools(server: McpServer) {
     },
     { title: "Get System Resources", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><system><resources></resources></system></show>", target);
       return formatResponse(result);

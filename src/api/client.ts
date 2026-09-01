@@ -1,6 +1,11 @@
 import { XMLParser } from "fast-xml-parser";
 import { fetch } from "undici";
 import { resolveFirewall, isMultiFirewall } from "../config/firewalls.js";
+import {
+  ensureCredentials,
+  getCredentialStatus,
+  markCredentialsSuspect,
+} from "../config/credential-manager.js";
 import { buildDispatcher, describeProxy } from "./proxy.js";
 
 const xmlParser = new XMLParser({
@@ -23,7 +28,24 @@ export interface FirewallTarget {
   verifySSL: boolean;
 }
 
-export function resolveTarget(firewallParam?: string): FirewallTarget | ApiResponse {
+export async function resolveTarget(firewallParam?: string): Promise<FirewallTarget | ApiResponse> {
+  let credentialStatus = getCredentialStatus();
+  if (!credentialStatus.resolved && credentialStatus.mode !== "direct") {
+    const resolved = await Promise.race([
+      ensureCredentials(),
+      new Promise<false>((resolve) => setTimeout(() => resolve(false), 15_000)),
+    ]);
+    credentialStatus = getCredentialStatus();
+    if (!resolved && !credentialStatus.resolved) {
+      return {
+        success: false,
+        error:
+          `Credentials unavailable: 1Password is locked or unreachable (${credentialStatus.lastError ?? "credential resolution is still pending"}). ` +
+          "Unlock 1Password and retry, or run the reload_credentials tool.",
+      };
+    }
+  }
+
   if (isMultiFirewall() && !firewallParam) {
     return {
       success: false,
@@ -74,6 +96,9 @@ async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise
   });
 
   if (!response.ok) {
+    if (apiKey && (response.status === 401 || response.status === 403)) {
+      markCredentialsSuspect();
+    }
     return {
       success: false,
       error: `HTTP ${response.status} ${response.statusText}`,
@@ -93,9 +118,21 @@ async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise
   }
 
   if (parsed.response?.["@_status"] === "error") {
+    const responseCode = String(parsed.response?.["@_code"] ?? "");
+    const responseMessage = JSON.stringify(parsed.response.msg || parsed.response);
+    if (
+      apiKey &&
+      (
+        responseCode === "401" ||
+        responseCode === "403" ||
+        /invalid\s+(?:api\s+)?(?:key|credential)|unauthori[sz]ed|forbidden/i.test(responseMessage)
+      )
+    ) {
+      markCredentialsSuspect();
+    }
     return {
       success: false,
-      error: `PanOS API Error: ${JSON.stringify(parsed.response.msg || parsed.response)}`,
+      error: `PanOS API Error: ${responseMessage}`,
     };
   }
 
@@ -124,7 +161,7 @@ export async function generateApiKey(host: string, username: string, password: s
 
 export async function executeOpCommand(cmd: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }
@@ -201,7 +238,7 @@ export async function executeLogQuery(
 
 export async function getConfig(xpath: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }
@@ -220,7 +257,7 @@ export async function getConfig(xpath: string, target?: FirewallTarget): Promise
 
 export async function setConfig(xpath: string, element: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }
@@ -239,7 +276,7 @@ export async function setConfig(xpath: string, element: string, target?: Firewal
 
 export async function deleteConfig(xpath: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }
@@ -258,7 +295,7 @@ export async function deleteConfig(xpath: string, target?: FirewallTarget): Prom
 
 export async function moveConfig(xpath: string, where: string, dst?: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }
@@ -280,7 +317,7 @@ export async function moveConfig(xpath: string, where: string, dst?: string, tar
 
 export async function commitConfig(cmd: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }
@@ -299,7 +336,7 @@ export async function commitConfig(cmd: string, target?: FirewallTarget): Promis
 
 export async function commitAll(cmd: string, target?: FirewallTarget): Promise<ApiResponse> {
   if (!target) {
-    const resolved = resolveTarget();
+    const resolved = await resolveTarget();
     if (isApiError(resolved)) return resolved;
     target = resolved;
   }

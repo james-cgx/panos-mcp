@@ -12,7 +12,7 @@ export function registerUtilityTools(server: McpServer) {
     },
     { title: "Run Op Command", readOnlyHint: false, destructiveHint: true, openWorldHint: true },
     async ({ command, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand(command, target);
       return formatResponse(result);
@@ -28,7 +28,7 @@ export function registerUtilityTools(server: McpServer) {
     },
     { title: "Get Config XPath", readOnlyHint: true, destructiveHint: false },
     async ({ xpath, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig(xpath, target);
       return formatResponse(result);

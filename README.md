@@ -63,7 +63,7 @@ For 1Password Environment injection, keep only the secret in 1Password: create a
 }
 ```
 
-For local 1Password CLI injection, install and sign in to the `op` CLI, then provide the host and the Environment ID. The server will relaunch itself under `op run --environment` so the local 1Password session injects `PANOS_API_KEY`:
+For local 1Password CLI injection, install and sign in to the `op` CLI, then provide the host and the Environment ID. The server uses a short-lived `op run --environment` command to resolve `PANOS_API_KEY` into memory:
 
 ```json
 {
@@ -144,13 +144,13 @@ The server only keeps expected PAN-OS variables in memory: `PANOS_HOST`, `PANOS_
 
 ### 1Password CLI Mode
 
-For local use, set `OP_ENVIRONMENT_ID` without `OP_SERVICE_ACCOUNT_TOKEN`. The server relaunches itself under:
+For local use, set `OP_ENVIRONMENT_ID` without `OP_SERVICE_ACCOUNT_TOKEN`. The server remains the process launched by the MCP client and runs a short-lived credential resolver equivalent to:
 
 ```bash
-op run --environment "$OP_ENVIRONMENT_ID" -- panos-mcp
+op run --environment "$OP_ENVIRONMENT_ID" --no-masking -- node -e '<environment dump>'
 ```
 
-This lets the local 1Password CLI inject Environment variables using the signed-in local `op` session. Install the 1Password CLI, sign in, and ensure `op` is on `PATH`, or set `OP_CLI_PATH`.
+The resolver captures the child environment into server memory; its stdout and stderr are never connected to the MCP transport. It exits after each resolution, so an expired or locked 1Password session cannot terminate the server. Install the 1Password CLI, sign in, and ensure `op` is on `PATH`, or set `OP_CLI_PATH`.
 
 When running from a local checkout, you can put the Environment ID in `.op/refs.env` instead of exporting it in your shell:
 
@@ -158,9 +158,9 @@ When running from a local checkout, you can put the Environment ID in `.op/refs.
 OP_ENVIRONMENT_ID=your-1password-environment-id
 ```
 
-`panos-mcp` reads that file at startup and then uses the same `op run --environment` flow. The local `.op/refs.env` file is ignored by git.
+`panos-mcp` reads that file at startup and then uses the same short-lived resolution flow. The local `.op/refs.env` file is ignored by git.
 
-Unlike service account mode, `op run` injects the full selected Environment into the process environment. Keep that Environment scoped to PAN-OS MCP values. Injected variables are detected by comparing the environment before and after `op run` (names only), so a variable already exported in the parent shell under the same name is invisible to injected-name detection — avoid exporting variables that duplicate Environment entry names.
+Unlike service account mode, the short-lived resolver captures the full selected Environment. Keep that Environment scoped to PAN-OS MCP values. Injected variables are detected by comparing the resolver environment against the server's existing environment, so a variable already exported under the same name is not treated as injected — avoid exports that duplicate Environment entry names.
 
 > Important: the same referencing rule applies here — injected variables are only used when named `PANOS_HOST`/`PANOS_API_KEY`/`PANOS_VERIFY_SSL` or referenced by an `api_key_env` entry in `firewalls.json`. An Environment full of per-firewall API keys does nothing by itself; see [Bootstrapping Multi-Firewall Mode from Panorama](#bootstrapping-multi-firewall-mode-from-panorama) to wire them up.
 
@@ -245,6 +245,14 @@ Supported proxy schemes:
 - `socks4a://[user@]host:port`
 
 Use `socks5h` when the firewall hostname only resolves on the proxy side.
+
+### Troubleshooting Credential Resolution
+
+The MCP transport connects before credential resolution begins. If 1Password is locked, signed out, unreachable, or expires after idle time, the server stays running and retries in the background. Firewall tools briefly wait for a just-unlocked session; while credentials remain unavailable, they return a normal result explaining that credentials are unavailable instead of dropping the MCP connection.
+
+After unlocking or signing in to 1Password, retry the original tool or call `reload_credentials` to force an immediate re-resolution and reload `firewalls.json`. `list_firewalls` includes credential mode, resolution state, last error, last attempt time, and attempt count. `reload_credentials` reports injected variable names only, never their values.
+
+Server lifecycle, retry, transport-close, and credential diagnostics are written to stderr with a `[panos-mcp]` prefix and ISO timestamp. Stdout remains reserved exclusively for MCP protocol frames.
 
 ## Development
 

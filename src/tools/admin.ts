@@ -11,7 +11,7 @@ export function registerAdminTools(server: McpServer) {
     },
     { title: "Get Admins", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/mgt-config/users", target);
       return formatResponse(result);
@@ -26,7 +26,7 @@ export function registerAdminTools(server: McpServer) {
     },
     { title: "Get Admin Roles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/admin-role", target);
       return formatResponse(result);
@@ -41,7 +41,7 @@ export function registerAdminTools(server: McpServer) {
     },
     { title: "Get Auth Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/shared/authentication-profile", target);
       return formatResponse(result);

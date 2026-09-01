@@ -11,7 +11,7 @@ export function registerVpnTools(server: McpServer) {
     },
     { title: "Get IPSec Tunnels", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><vpn><ipsec-sa></ipsec-sa></vpn></show>", target);
       return formatResponse(result);
@@ -26,7 +26,7 @@ export function registerVpnTools(server: McpServer) {
     },
     { title: "Get GlobalProtect Users", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><global-protect-gateway><current-user></current-user></global-protect-gateway></show>", target);
       return formatResponse(result);
@@ -41,7 +41,7 @@ export function registerVpnTools(server: McpServer) {
     },
     { title: "Get GlobalProtect Config", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/global-protect", target);
       return formatResponse(result);

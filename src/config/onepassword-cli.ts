@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import { delimiter, dirname, join, resolve } from "path";
 import { accessSync, constants, existsSync, readFileSync } from "fs";
 
-type EnvLike = Record<string, string | undefined>;
+export type EnvLike = Record<string, string | undefined>;
 
 const WRAP_SENTINEL = "PANOS_OP_WRAPPED";
 
@@ -118,7 +118,7 @@ export function loadOpEnvironmentIdFromRefsFile(
   return { loaded: false };
 }
 
-function defaultLookupOp(env: EnvLike): string | null {
+export function defaultLookupOp(env: EnvLike): string | null {
   const override = (env.OP_CLI_PATH ?? "").trim();
   if (override) {
     try {

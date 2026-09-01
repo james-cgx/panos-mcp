@@ -16,7 +16,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Get Address Objects", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address", target);
       return formatResponse(result);
@@ -31,7 +31,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Get Address Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address-group", target);
       return formatResponse(result);
@@ -46,7 +46,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Get Service Objects", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service", target);
       return formatResponse(result);
@@ -61,7 +61,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Get Service Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service-group", target);
       return formatResponse(result);
@@ -76,7 +76,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Get Application Filters", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/application-filter", target);
       return formatResponse(result);
@@ -95,7 +95,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Add Address Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, type, value, description, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address";
       let element = `<entry name="${xmlEscape(name)}"><${type}>${xmlEscape(value)}</${type}>`;
@@ -117,7 +117,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Add Address Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, members: memberList, description, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address-group";
       let element = `<entry name="${xmlEscape(name)}"><static>${members(memberList)}</static>`;
@@ -140,7 +140,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Add Service Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, protocol, port, description, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service";
       let element = `<entry name="${xmlEscape(name)}"><protocol><${protocol}><port>${xmlEscape(port)}</port></${protocol}></protocol>`;
@@ -162,7 +162,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Add Service Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, members: memberList, description, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service-group";
       let element = `<entry name="${xmlEscape(name)}"><members>${members(memberList)}</members>`;
@@ -182,7 +182,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Delete Address Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -199,7 +199,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Delete Address Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address-group/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -216,7 +216,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Delete Service Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -233,7 +233,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Delete Service Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service-group/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -251,7 +251,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Get Tags", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/tag", target);
       return formatResponse(result);
@@ -272,7 +272,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Add Tag", readOnlyHint: false, destructiveHint: true },
     async ({ name, color, comments, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/tag";
       let element = `<entry name="${xmlEscape(name)}">`;
@@ -293,7 +293,7 @@ export function registerObjectsTools(server: McpServer) {
     },
     { title: "Delete Tag", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/tag/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);

@@ -16,7 +16,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Get Certificates", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/shared/certificate", target);
       return formatResponse(result);
@@ -31,7 +31,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Get Decryption Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/decryption/rules", target);
       return formatResponse(result);
@@ -46,7 +46,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Get Decryption Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/profiles/decryption", target);
       return formatResponse(result);
@@ -72,7 +72,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Add Decryption Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, service, action, type, decryption_profile, description, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/decryption/rules";
       let element = `<entry name="${xmlEscape(name)}">`;
@@ -103,7 +103,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Move Decryption Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       if ((where === "before" || where === "after") && !destination) {
         return formatResponse({ success: false, error: "'destination' is required when 'where' is 'before' or 'after'" });
@@ -123,7 +123,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Delete Decryption Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/decryption/rules/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -141,7 +141,7 @@ export function registerCertificatesTools(server: McpServer) {
     },
     { title: "Set Decryption Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/decryption/rules/entry[@name='${name}']`;
       const element = `<disabled>${disabled ? "yes" : "no"}</disabled>`;

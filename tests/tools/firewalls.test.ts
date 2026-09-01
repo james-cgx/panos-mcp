@@ -32,7 +32,7 @@ function getListFirewallsHandler(): ToolHandler {
   let handler: ToolHandler | undefined;
   const fakeServer = {
     tool: (...args: unknown[]) => {
-      handler = args[args.length - 1] as ToolHandler;
+      if (args[0] === "list_firewalls") handler = args[args.length - 1] as ToolHandler;
     },
   };
   registerFirewallTools(fakeServer as any);
@@ -78,6 +78,14 @@ describe("list_firewalls tool", () => {
       firewalls: [{ name: "HQ-FW1", host: "hq-fw1.example.com", api_key_env: "HQ_FW1" }],
     });
     expect(data.next_steps).toContain("bootstrap_firewalls_from_panorama");
+    expect(data.credential_status).toEqual(
+      expect.objectContaining({
+        mode: "direct",
+        resolved: expect.any(Boolean),
+        lastError: null,
+        attemptCount: expect.any(Number),
+      })
+    );
     expect(raw).not.toContain("secret-panorama-key");
   });
 

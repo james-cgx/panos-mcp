@@ -60,9 +60,8 @@ export async function loadOnePasswordEnvironment(
   if (!environmentId) {
     throw new Error("OP_ENVIRONMENT_ID is required when OP_SERVICE_ACCOUNT_TOKEN is set");
   }
-  // Environment ID without a token = local 1Password CLI mode: secrets are
-  // injected into process.env by `op run --environment` (see onepassword-cli.ts),
-  // so there is nothing for the SDK to load here.
+  // Environment ID without a token = local 1Password CLI mode. The short-lived
+  // resolver handles that mode, so there is nothing for the SDK to load here.
   if (!serviceAccountToken) {
     return new Map();
   }

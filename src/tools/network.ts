@@ -12,7 +12,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get Interfaces", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><interface>all</interface></show>", target);
       return formatResponse(result);
@@ -27,7 +27,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get Zones", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/zone", target);
       return formatResponse(result);
@@ -42,7 +42,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get Routing Table", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><routing><route></route></routing></show>", target);
       return formatResponse(result);
@@ -57,7 +57,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get ARP Table", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><arp><entry>all</entry></arp></show>", target);
       return formatResponse(result);
@@ -72,7 +72,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get VLANS", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/network/vlan", target);
       return formatResponse(result);
@@ -87,7 +87,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get DHCP Leases", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><dhcp><server><lease>all</lease></server></dhcp></show>", target);
       return formatResponse(result);
@@ -102,7 +102,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get DNS Proxy", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/network/dns-proxy", target);
       return formatResponse(result);
@@ -120,7 +120,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Get Static Routes", readOnlyHint: true, destructiveHint: false },
     async ({ virtual_router, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const vr = virtual_router || "default";
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='${vr}']/routing-table/ip/static-route`;
@@ -144,7 +144,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Add Static Route", readOnlyHint: false, destructiveHint: true },
     async ({ name, destination, nexthop_type, nexthop_value, interface: iface, metric, virtual_router, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const vr = virtual_router || "default";
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='${vr}']/routing-table/ip/static-route`;
@@ -175,7 +175,7 @@ export function registerNetworkTools(server: McpServer) {
     },
     { title: "Delete Static Route", readOnlyHint: false, destructiveHint: true },
     async ({ name, virtual_router, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const vr = virtual_router || "default";
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='${vr}']/routing-table/ip/static-route/entry[@name='${name}']`;

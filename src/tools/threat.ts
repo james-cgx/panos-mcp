@@ -11,7 +11,7 @@ export function registerThreatTools(server: McpServer) {
     },
     { title: "Get Wildfire Status", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><wildfire><status></status></wildfire></show>", target);
       return formatResponse(result);
@@ -26,7 +26,7 @@ export function registerThreatTools(server: McpServer) {
     },
     { title: "Get Antivirus Version", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><system><info></info></system></show>", target);
       if (result.success && result.data?.system) {
@@ -52,7 +52,7 @@ export function registerThreatTools(server: McpServer) {
     },
     { title: "Get Content Versions", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<request><content><upgrade><info></info></upgrade></content></request>", target);
       return formatResponse(result);
@@ -67,7 +67,7 @@ export function registerThreatTools(server: McpServer) {
     },
     { title: "Get URL Categories", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/predefined/pan-url-categories", target);
       return formatResponse(result);

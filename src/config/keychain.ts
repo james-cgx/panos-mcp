@@ -1,3 +1,5 @@
+import { diagnostic } from "../diagnostics.js";
+
 type KeyringEntry = {
   getPassword(): string | null;
   setPassword(password: string): void;
@@ -20,9 +22,7 @@ async function ensureLoaded(): Promise<void> {
   } catch {
     EntryClass = null;
     keychainAvailable = false;
-    process.stderr.write(
-      "[panos-mcp] WARNING: Keychain unavailable — API keys will be stored in plaintext\n"
-    );
+    diagnostic("WARNING: Keychain unavailable — API keys will be stored in plaintext");
   }
 }
 

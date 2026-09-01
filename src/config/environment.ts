@@ -1,10 +1,5 @@
-import { loadOnePasswordEnvironment } from "./onepassword.js";
-import { getOpCliInjectedNames } from "./onepassword-cli.js";
-import {
-  getExpectedEnvironmentVariableNames,
-  recordInjectedEnvironmentNames,
-  setInjectedEnvironment,
-} from "./firewalls.js";
+import { reloadCredentials } from "./credential-manager.js";
+import { getInjectedEnvironmentNames } from "./firewalls.js";
 
 /**
  * Loads 1Password-injected credentials and records injected variable NAMES for
@@ -14,16 +9,6 @@ import {
  * number of variables retained in memory.
  */
 export async function loadInjectedEnvironment(): Promise<number> {
-  const skippedNames: string[] = [];
-  const environment = await loadOnePasswordEnvironment({
-    allowedNames: getExpectedEnvironmentVariableNames(),
-    onSkippedName: (name) => skippedNames.push(name),
-  });
-  setInjectedEnvironment(environment);
-  recordInjectedEnvironmentNames(skippedNames);
-
-  const cliInjectedNames = getOpCliInjectedNames();
-  if (cliInjectedNames) recordInjectedEnvironmentNames(cliInjectedNames);
-
-  return environment.size;
+  await reloadCredentials();
+  return getInjectedEnvironmentNames().length;
 }
