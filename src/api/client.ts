@@ -16,6 +16,8 @@ const xmlParser = new XMLParser({
   numberParseOptions: { hex: false, leadingZeros: false, eNotation: false },
 });
 
+const INVALID_CREDENTIAL_PATTERN = /invalid\s+(?:api\s+)?(?:key|credential)/i;
+
 export interface ApiResponse {
   success: boolean;
   data?: any;
@@ -96,7 +98,16 @@ async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise
   });
 
   if (!response.ok) {
-    if (apiKey && (response.status === 401 || response.status === 403)) {
+    let responseBody = "";
+    try {
+      responseBody = await response.text();
+    } catch {
+      // The HTTP status remains actionable when an error body cannot be read.
+    }
+    if (
+      apiKey &&
+      (response.status === 401 || INVALID_CREDENTIAL_PATTERN.test(responseBody))
+    ) {
       markCredentialsSuspect();
     }
     return {
@@ -118,16 +129,8 @@ async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise
   }
 
   if (parsed.response?.["@_status"] === "error") {
-    const responseCode = String(parsed.response?.["@_code"] ?? "");
     const responseMessage = JSON.stringify(parsed.response.msg || parsed.response);
-    if (
-      apiKey &&
-      (
-        responseCode === "401" ||
-        responseCode === "403" ||
-        /invalid\s+(?:api\s+)?(?:key|credential)|unauthori[sz]ed|forbidden/i.test(responseMessage)
-      )
-    ) {
+    if (apiKey && INVALID_CREDENTIAL_PATTERN.test(responseMessage)) {
       markCredentialsSuspect();
     }
     return {

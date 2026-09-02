@@ -68,6 +68,8 @@ registerUtilityTools(server);
 
 function installProcessDiagnostics(): void {
   process.on("uncaughtException", (error) => {
+    // Keep stdio alive: MCP clients do not reconnect after a server crash, and
+    // individual tool handlers already catch unexpected failures.
     diagnostic(`Uncaught exception: ${errorDetails(error)}`);
   });
   process.on("unhandledRejection", (reason) => {
@@ -119,4 +121,5 @@ async function main() {
 
 void main().catch((error) => {
   diagnostic(`Startup failed after transport setup: ${errorDetails(error)}`);
+  process.exit(1);
 });

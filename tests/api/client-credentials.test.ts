@@ -1,5 +1,38 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { resolveTarget } from "../../src/api/client.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  fetch: vi.fn(),
+  markCredentialsSuspect: vi.fn(),
+}));
+
+vi.mock("undici", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("undici")>()),
+  fetch: mocks.fetch,
+}));
+
+vi.mock("../../src/config/credential-manager.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/config/credential-manager.js")>()),
+  markCredentialsSuspect: mocks.markCredentialsSuspect,
+}));
+
+import { executeOpCommand, resolveTarget } from "../../src/api/client.js";
+
+const target = {
+  host: "firewall.example.com",
+  apiKey: "example-api-key",
+  verifySSL: false,
+};
+
+function response(options: {
+  status: number;
+  statusText: string;
+  body?: string;
+}) {
+  return new Response(options.body ?? "", {
+    status: options.status,
+    statusText: options.statusText,
+  });
+}
 
 const original = {
   environmentId: process.env.OP_ENVIRONMENT_ID,
@@ -13,6 +46,7 @@ const original = {
 };
 
 afterEach(() => {
+  vi.clearAllMocks();
   const restore = (name: string, value: string | undefined) => {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -25,6 +59,64 @@ afterEach(() => {
   restore("PANOS_HOST", original.host);
   restore("PANOS_API_KEY", original.apiKey);
   restore("PANOS_FIREWALLS_CONFIG", original.configPath);
+});
+
+describe("credential failure detection", () => {
+  it("does not refresh credentials for an XML insufficient-rights error", async () => {
+    mocks.fetch.mockResolvedValue(
+      response({
+        status: 200,
+        statusText: "OK",
+        body: '<response status="error" code="403"><msg><line>Insufficient administrator rights</line></msg></response>',
+      })
+    );
+
+    const result = await executeOpCommand("<show></show>", target);
+
+    expect(result.success).toBe(false);
+    expect(mocks.markCredentialsSuspect).not.toHaveBeenCalled();
+  });
+
+  it("refreshes credentials for an explicit XML invalid-credential error", async () => {
+    mocks.fetch.mockResolvedValue(
+      response({
+        status: 200,
+        statusText: "OK",
+        body: '<response status="error" code="403"><msg><line>Invalid credential</line></msg></response>',
+      })
+    );
+
+    const result = await executeOpCommand("<show></show>", target);
+
+    expect(result.success).toBe(false);
+    expect(mocks.markCredentialsSuspect).toHaveBeenCalledOnce();
+  });
+
+  it("refreshes credentials for HTTP 401", async () => {
+    mocks.fetch.mockResolvedValue(
+      response({ status: 401, statusText: "Unauthorized" })
+    );
+
+    const result = await executeOpCommand("<show></show>", target);
+
+    expect(result).toEqual({ success: false, error: "HTTP 401 Unauthorized" });
+    expect(mocks.markCredentialsSuspect).toHaveBeenCalledOnce();
+  });
+
+  it("does not refresh credentials for HTTP 403 without an invalid-credential body", async () => {
+    mocks.fetch.mockResolvedValue(
+      response({
+        status: 403,
+        statusText: "Forbidden",
+        body: "Insufficient administrator rights",
+      })
+    );
+
+    const result = await executeOpCommand("<show></show>", target);
+
+    expect(result).toEqual({ success: false, error: "HTTP 403 Forbidden" });
+    expect(mocks.markCredentialsSuspect).not.toHaveBeenCalled();
+  });
 });
 
 describe("credential-aware target resolution", () => {
