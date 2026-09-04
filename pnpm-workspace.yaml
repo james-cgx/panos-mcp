@@ -2,4 +2,5 @@ allowBuilds:
   esbuild: true
 overrides:
   '@hono/node-server': 2.0.10
-  fast-uri: 3.1.5
+  fast-uri: 3.1.6
+  qs: 6.16.0
