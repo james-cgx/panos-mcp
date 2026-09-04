@@ -14,7 +14,7 @@ export function registerConfigTools(server: McpServer) {
     },
     { title: "Set Config", readOnlyHint: false, destructiveHint: true },
     async ({ xpath, element, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await setConfig(xpath, element, target);
       return formatResponse(result);
@@ -30,7 +30,7 @@ export function registerConfigTools(server: McpServer) {
     },
     { title: "Delete Config", readOnlyHint: false, destructiveHint: true },
     async ({ xpath, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await deleteConfig(xpath, target);
       return formatResponse(result);
@@ -47,7 +47,7 @@ export function registerConfigTools(server: McpServer) {
     },
     { title: "Commit", readOnlyHint: false, destructiveHint: true },
     async ({ description, partial_admin, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit>";
       if (description) {
@@ -72,7 +72,7 @@ export function registerConfigTools(server: McpServer) {
     },
     { title: "Panorama Commit", readOnlyHint: false, destructiveHint: true },
     async ({ description, partial_admin, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit>";
       if (description) {
@@ -98,7 +98,7 @@ export function registerConfigTools(server: McpServer) {
     },
     { title: "Panorama Push To Devices", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, description, include_template, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit-all><shared-policy>";
       cmd += `<device-group><entry name="${xmlEscape(device_group)}"/></device-group>`;

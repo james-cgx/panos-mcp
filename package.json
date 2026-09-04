@@ -17,7 +17,8 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "keygen": "node dist/cli/keygen.js",
-    "test": "vitest run",
+    "test": "vitest run --configLoader native --pool=threads",
+    "test:handshake": "node scripts/mcp-handshake-test.mjs",
     "bundle": "node scripts/bundle.js",
     "pack:extension": "tsc && node scripts/bundle.js && node scripts/pack-extension.js",
     "prepare": "tsc"

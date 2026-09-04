@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { getKey, setKey, isKeychainAvailable, initKeychain } from "./keychain.js";
+import { diagnostic } from "../diagnostics.js";
 
 export interface FirewallEntry {
   name: string;
@@ -112,6 +113,10 @@ export function recordInjectedEnvironmentNames(names: Iterable<string>): void {
   for (const name of names) {
     if (name) injectedEnvironmentNames.add(name);
   }
+}
+
+export function getInjectedEnvironmentNames(): string[] {
+  return [...injectedEnvironmentNames].sort();
 }
 
 /**
@@ -227,13 +232,9 @@ export async function loadFirewallConfig(): Promise<void> {
         }
         const cleaned = { firewalls: fileEntries.map(fileEntryWithoutPlaintextKey) };
         writeFileSync(configPath, JSON.stringify(cleaned, null, 2) + "\n");
-        process.stderr.write(
-          `[panos-mcp] Migrated ${toMigrate.length} API key(s) to system keychain\n`
-        );
+        diagnostic(`Migrated ${toMigrate.length} API key(s) to system keychain`);
       } catch (err) {
-        process.stderr.write(
-          `[panos-mcp] ERROR: Migration failed — ${String(err)}. Keys remain in plaintext.\n`
-        );
+        diagnostic(`ERROR: Migration failed — ${String(err)}. Keys remain in plaintext.`);
       }
     }
   }
@@ -249,8 +250,8 @@ export async function loadFirewallConfig(): Promise<void> {
       if (key) {
         keyMap.set(e.name, key);
       } else {
-        process.stderr.write(
-          `[panos-mcp] WARNING: Environment variable "${fileEntry.api_key_env}" for firewall "${e.name}" is not set — it will be unavailable\n`
+        diagnostic(
+          `WARNING: Environment variable "${fileEntry.api_key_env}" for firewall "${e.name}" is not set — it will be unavailable`
         );
       }
       continue;
@@ -261,9 +262,7 @@ export async function loadFirewallConfig(): Promise<void> {
       if (key) {
         keyMap.set(e.name, key);
       } else {
-        process.stderr.write(
-          `[panos-mcp] WARNING: No keychain entry for firewall "${e.name}" — it will be unavailable\n`
-        );
+        diagnostic(`WARNING: No keychain entry for firewall "${e.name}" — it will be unavailable`);
       }
     } else {
       // Fallback: read api_key directly from file entry

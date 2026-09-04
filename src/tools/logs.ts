@@ -13,7 +13,7 @@ export function registerLogsTools(server: McpServer) {
     },
     { title: "Get Traffic Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeLogQuery("traffic", nlogs || 20, query, target);
       return formatResponse(result);
@@ -30,7 +30,7 @@ export function registerLogsTools(server: McpServer) {
     },
     { title: "Get Threat Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeLogQuery("threat", nlogs || 20, query, target);
       return formatResponse(result);
@@ -47,7 +47,7 @@ export function registerLogsTools(server: McpServer) {
     },
     { title: "Get System Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeLogQuery("system", nlogs || 20, query, target);
       return formatResponse(result);
@@ -64,7 +64,7 @@ export function registerLogsTools(server: McpServer) {
     },
     { title: "Get Config Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeLogQuery("config", nlogs || 20, query, target);
       return formatResponse(result);
@@ -81,7 +81,7 @@ export function registerLogsTools(server: McpServer) {
     },
     { title: "Get URL Filter Logs", readOnlyHint: true, destructiveHint: false },
     async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeLogQuery("url", nlogs || 20, query, target);
       return formatResponse(result);

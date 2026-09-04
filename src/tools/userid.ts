@@ -11,7 +11,7 @@ export function registerUserIdTools(server: McpServer) {
     },
     { title: "Get User-ID Mappings", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><user><ip-user-mapping><all></all></ip-user-mapping></user></show>", target);
       return formatResponse(result);
@@ -26,7 +26,7 @@ export function registerUserIdTools(server: McpServer) {
     },
     { title: "Get User-ID Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><user><group><list></list></group></user></show>", target);
       return formatResponse(result);
@@ -41,7 +41,7 @@ export function registerUserIdTools(server: McpServer) {
     },
     { title: "Get User-ID Config", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/user-id-agent", target);
       return formatResponse(result);

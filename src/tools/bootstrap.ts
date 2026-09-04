@@ -120,7 +120,7 @@ export function registerBootstrapTools(server: McpServer) {
       await loadInjectedEnvironment();
       await loadFirewallConfig();
 
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
 
       // With no config entries, the target came from the PANOS_HOST/

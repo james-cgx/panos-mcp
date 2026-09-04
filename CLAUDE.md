@@ -24,13 +24,15 @@ The repo is pinned to `pnpm@11.9.0` through `packageManager`. Do not add `packag
 
 ## Architecture
 
-- `src/index.ts` creates the MCP server, loads credential/configuration sources, registers tool modules, and starts stdio transport.
+- `src/index.ts` creates the MCP server, registers tool modules, connects stdio before credential work, installs lifecycle diagnostics, and starts background credential supervision.
 - `src/api/client.ts` builds PAN-OS XML API requests, handles commits and polling, and uses proxy dispatchers when configured.
 - `src/api/proxy.ts` resolves proxy environment variables and builds HTTP/SOCKS dispatchers.
 - `src/config/firewalls.ts` loads single-firewall and multi-firewall configuration, supports 1Password-injected environment values, migrates plaintext keys to the OS keychain, and resolves target firewalls for tools.
 - `src/config/onepassword.ts` loads selected 1Password Environment variables through the 1Password SDK.
-- `src/config/onepassword-cli.ts` relaunches under `op run --environment` for local CLI injection mode.
-- `src/config/environment.ts` orchestrates injected-credential loading and tracks injected variable names (never values) for both 1Password modes.
+- `src/config/onepassword-cli.ts` loads `.op/refs.env`, locates the `op` CLI, and retains compatibility helpers for externally wrapped launches.
+- `src/config/op-resolver.ts` runs a short-lived captured `op run --environment` child to resolve local CLI credentials without wrapping the MCP server process.
+- `src/config/credential-manager.ts` supervises direct, CLI, and service-account credential modes with single-flight resolution, retry backoff, status, and auth-failure refresh.
+- `src/config/environment.ts` is the compatibility reload facade used by in-process configuration workflows.
 - `src/config/keychain.ts` wraps OS keychain access through `@napi-rs/keyring`.
 - `src/tools/` contains MCP tool registrations grouped by PAN-OS domain.
 - `src/schemas/panos.ts` contains reusable Zod schemas for tool inputs.

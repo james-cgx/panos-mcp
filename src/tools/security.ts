@@ -16,7 +16,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Get Security Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules", target);
       return formatResponse(result);
@@ -31,7 +31,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Get Security Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/profiles", target);
       return formatResponse(result);
@@ -46,7 +46,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Get Security Profile Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/profile-group", target);
       return formatResponse(result);
@@ -61,7 +61,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Get PBF Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/pbf/rules", target);
       return formatResponse(result);
@@ -76,7 +76,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Get Dos Profiles", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/profiles/dos-protection", target);
       return formatResponse(result);
@@ -91,7 +91,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Get QoS Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await getConfig("/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/qos/rules", target);
       return formatResponse(result);
@@ -120,7 +120,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Add Security Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, application, service, action, log_end, log_start, profile_group, description, disabled, tag, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules";
       let element = `<entry name="${xmlEscape(name)}">`;
@@ -154,7 +154,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Move Security Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       if ((where === "before" || where === "after") && !destination) {
         return formatResponse({ success: false, error: "'destination' is required when 'where' is 'before' or 'after'" });
@@ -174,7 +174,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Delete Security Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -192,7 +192,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Set Security Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules/entry[@name='${name}']`;
       const element = `<disabled>${disabled ? "yes" : "no"}</disabled>`;
@@ -220,7 +220,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Add PBF Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, source, action, egress_interface, next_hop_type, next_hop_value, description, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/pbf/rules";
       let element = `<entry name="${xmlEscape(name)}">`;
@@ -259,7 +259,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Move PBF Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       if ((where === "before" || where === "after") && !destination) {
         return formatResponse({ success: false, error: "'destination' is required when 'where' is 'before' or 'after'" });
@@ -279,7 +279,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Delete PBF Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/pbf/rules/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -297,7 +297,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Set PBF Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/pbf/rules/entry[@name='${name}']`;
       const element = `<disabled>${disabled ? "yes" : "no"}</disabled>`;
@@ -326,7 +326,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Add QoS Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, application, service, action_class, description, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/qos/rules";
       let element = `<entry name="${xmlEscape(name)}">`;
@@ -356,7 +356,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Move QoS Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       if ((where === "before" || where === "after") && !destination) {
         return formatResponse({ success: false, error: "'destination' is required when 'where' is 'before' or 'after'" });
@@ -376,7 +376,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Delete QoS Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/qos/rules/entry[@name='${name}']`;
       const result = await deleteConfig(xpath, target);
@@ -394,7 +394,7 @@ export function registerSecurityTools(server: McpServer) {
     },
     { title: "Set QoS Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
-      const target = resolveTarget(firewall);
+      const target = await resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/qos/rules/entry[@name='${name}']`;
       const element = `<disabled>${disabled ? "yes" : "no"}</disabled>`;
